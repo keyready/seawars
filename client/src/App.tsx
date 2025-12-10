@@ -7,6 +7,7 @@ import { io } from 'socket.io-client';
 
 import { GameboardActions } from '@/entities/GameBoard';
 import { getGameRoom } from '@/entities/GameBoard/model/selectors/getGameBoard';
+import type { Leaderboard, Room } from '@/entities/GameBoard/model/types/GameBoard';
 import { Gameboard } from '@/entities/GameBoard/ui/GameBoard';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
@@ -14,7 +15,7 @@ import { GameSocketActions, getGameSocket } from '@/shared/hooks/useGameSocket';
 
 import { EnterRoomForm } from './Widgets/EnterRoomForm';
 
-// const SOCKET_URL = 'http://192.168.0.187:5000';
+// const SOCKET_URL = 'http://172.100.1.85:5000';
 const SOCKET_URL = 'http://localhost:5000';
 
 function App() {
@@ -48,9 +49,16 @@ function App() {
             dispatch(GameboardActions.setGameRoom(roomId));
         });
 
-        socket?.on('joined-room', ({ name }: { name: string }) => {
-            alert(`Joined new player: ${name}`);
-        });
+        const handleGetRooms = ({ rooms }: { rooms: Room[] }) => {
+            dispatch(GameboardActions.setRooms(rooms));
+        };
+
+        const handleGetLeaderboard = ({ games }: { games: Leaderboard[] }) => {
+            dispatch(GameboardActions.setLeaderBoard(games));
+        };
+
+        socket?.on('existing-rooms', handleGetRooms);
+        socket?.on('leaderboard', handleGetLeaderboard);
     }, [dispatch, socket]);
 
     return (
@@ -111,7 +119,7 @@ function App() {
                         initial={{ opacity: 0, y: -50 }}
                         exit={{ opacity: 0, y: -50 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="w-1/2"
+                        className="w-full"
                     >
                         <EnterRoomForm />
                     </motion.div>

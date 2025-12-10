@@ -80,7 +80,7 @@ export const useGameActions = () => {
 
         const handleGameOver = ({ winner }: { winner: string }) => {
             dispatch(GameboardActions.reset());
-            alert(`Победитель - ${winner}`);
+            if (currentRoom) alert(`Победитель - ${winner}`);
         };
 
         const handleEndGame = () => {
@@ -91,16 +91,18 @@ export const useGameActions = () => {
         socket.on('fire-response', handleFireResponse);
         socket.on('incoming-fire', handleIncomingFire);
         socket.on('turn-changed', handleTurnChanged);
+        socket.on('game-start', handleGameStart);
         socket.on('game-end', handleEndGame);
         socket.on('game-over', handleGameOver);
-        socket.on('game-start', handleGameStart);
         socket.on('error', ({ message }: { message: string }) => alert(message));
 
         return () => {
             socket.off('fire-response', handleFireResponse);
             socket.off('incoming-fire', handleIncomingFire);
             socket.off('turn-changed', handleTurnChanged);
-            socket.off('game-start');
+            socket.off('game-start', handleGameStart);
+            socket.off('game-end', handleEndGame);
+            socket.off('game-over', handleGameOver);
             socket.off('error');
         };
     }, [currentName, dispatch, enemyGameboard, ownerGameboard, socket]);

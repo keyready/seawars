@@ -28,6 +28,20 @@ export interface GameboardPayload {
     board: CellState[][];
 }
 
+export interface Room {
+    id: string;
+    playersLength: number;
+}
+
+export interface Leaderboard {
+    id: string;
+    players: string[];
+    winnerName: string;
+    createdAt: Date;
+    endedAt: Date;
+    scores: { [playerName: string]: number };
+}
+
 export interface GameBoardSchema {
     ownerBoard: GameBoard;
     enemyBoard: GameBoard;
@@ -37,4 +51,7 @@ export interface GameBoardSchema {
     phase: BattlePhase;
     currentPlayer: CurrentPlayer;
     room: string | undefined;
+
+    existingRooms?: Room[];
+    leaderboard?: Leaderboard[];
 }

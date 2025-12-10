@@ -1,11 +1,9 @@
-// server.js
 const express = require('express');
 const http = require('http');
 const {Server} = require('socket.io');
 const {v4: uuidv4} = require('uuid');
 const cron = require('node-cron')
 
-// Вспомогательные функции (встроены для простоты)
 function computeShipCells(head, size, orientation) {
     const cells = [];
     for (let i = 0; i < size; i++) {
@@ -31,21 +29,41 @@ function findShipAtCell(ships, pos) {
 
 const rooms = {}
 
-const gameState = {
-    fleets: {},
-    turn: 'waiting', // чей ход
-    started: false,
-    players: []
-};
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {origin: '*'}, // для разработки
 });
 
+const gamesLogs = {}
+
 io.on('connection', (socket) => {
     console.log(`✅ \tNew client connected: ${socket.id}`);
+
+    if (Object.keys(gamesLogs).length) {
+        socket.emit('leaderboard', {
+            games: Object.keys(gamesLogs).filter(Boolean).map(game => {
+                if (!gamesLogs[game]?.endedAt) return undefined
+                return ({
+                    id: game,
+                    players: gamesLogs[game].players,
+                    winnerName: gamesLogs[game].winnerName,
+                    createdAt: gamesLogs[game].createdAt,
+                    endedAt: gamesLogs[game].endedAt,
+                    scores: gamesLogs[game].scores,
+                });
+            })
+        })
+    }
+
+    if (Object.keys(rooms).length) {
+        socket.emit('existing-rooms', {
+            rooms: Object.keys(rooms).map(game => ({
+                id: game,
+                players: rooms[game].players.length
+            }))
+        })
+    }
 
     socket.on('create-room', ({name}) => {
         const roomId = uuidv4()
@@ -53,36 +71,56 @@ io.on('connection', (socket) => {
             fleets: {},
             turn: 'waiting',
             started: false,
-            players: []
+            players: [],
+            createdAt: new Date(),
         }
         console.log(`✅ \tRoom created: ${roomId}`)
+
+        console.log(`✅ \tPlayer ${name} joined the room: ${roomId}`)
+        rooms[roomId].players.push(name);
+
         socket.join(roomId)
         io.in(roomId).emit('room-created', {roomId})
+
+        io.emit('existing-rooms', {
+            rooms: Object.keys(rooms).map(room => ({
+                id: room,
+                playersLength: rooms[room].players.length
+            }))
+        })
     })
 
     socket.on('join-room', ({roomId, name}) => {
         if (!rooms.hasOwnProperty(roomId)) {
-            return socket.emit('error', {message: `There is no room with ID = ${roomId}`})
+            return socket.emit('error', {message: `There is no room with ID = ${roomId} `})
         }
-        if (rooms[roomId].players.length > 2) {
-            return socket.emit('error', {message: `There are already 2 players in the room`})
+        if (rooms[roomId].players.length >= 2) {
+            return socket.emit('error', {message: `There are already 2 players in the room `})
         }
 
+        rooms[roomId].players.push(name);
         console.log(`✅ \tPlayer ${name} joined the room: ${roomId}`)
+
         socket.join(roomId);
-        socket.emit('joined-room', { roomId, player: name });
-        io.to(roomId).emit('player-joined', { player: name });
+        socket.emit('joined-room', {roomId, player: name});
+        io.to(roomId).emit('player-joined', {player: name});
+
+        io.emit('existing-rooms', {
+            rooms: Object.keys(rooms).map(room => ({
+                id: room,
+                playersLength: rooms[room].players.length
+            }))
+        })
     })
 
     socket.on('submit-fleet', ({fleet, player, roomId}) => {
         if (!rooms.hasOwnProperty(roomId)) {
-            socket.emit('error', {message: `There is no room with ID = ${roomId}`})
+            socket.emit('error', {message: `There is no room with ID = ${roomId} `})
         }
 
         if (rooms[roomId].fleets[player]) {
-            return socket.emit('error', { message: 'Fleet already submitted' });
+            return socket.emit('error', {message: 'Fleet already submitted'});
         }
-        rooms[roomId].players.push(player); // только первый раз
 
         rooms[roomId].fleets[player] = {
             ships: fleet.filter(Boolean).map(ship => ({
@@ -97,18 +135,18 @@ io.on('connection', (socket) => {
             rooms[roomId].started = true;
             rooms[roomId].turn = player;
             console.log(`▶️ \tGame started in room #${roomId}, turn ${rooms[roomId].turn}`);
-            io.in(roomId).emit('game-start', { turn: player });
+            io.in(roomId).emit('game-start', {turn: player});
         }
     });
 
-    socket.on('fire', ({ pos, player, roomId }) => {
+    socket.on('fire', ({pos, player, roomId}) => {
         if (!rooms[roomId].started) {
-            socket.emit('error', { message: 'Game not started' });
+            socket.emit('error', {message: 'Game not started'});
             return;
         }
 
         if (player !== rooms[roomId].turn) {
-            socket.emit('error', { message: `Not your turn (current: ${rooms[roomId].turn})` });
+            socket.emit('error', {message: `Not your turn (current: ${rooms[roomId].turn})`});
             return;
         }
 
@@ -117,17 +155,17 @@ io.on('connection', (socket) => {
         const opponentFleet = rooms[roomId].fleets[opponent]?.ships;
 
         if (!opponentFleet) {
-            socket.emit('error', { message: 'Opponent fleet not ready' });
+            socket.emit('error', {message: 'Opponent fleet not ready'});
             return;
         }
 
         // Проверяем попадание
-        const { foundShip, hitCell } = findShipAtCell(opponentFleet, pos);
+        const {foundShip, hitCell} = findShipAtCell(opponentFleet, pos);
 
         let result = 'miss';
 
         if (foundShip) {
-            result = 'hit'
+            result = 'hit';
 
             foundShip.hitCells = [...foundShip.hitCells, hitCell];
             rooms[roomId].fleets[opponent].ships = [
@@ -138,36 +176,50 @@ io.on('connection', (socket) => {
                 result = 'destroyed'
 
                 if (rooms[roomId].fleets[opponent].ships.every(ship => ship.cells.length === ship.hitCells.length)) {
-                    socket.emit('game-over', { winner: player });
-                    io.in(roomId).emit('game-over', { winner: player });
-                    delete rooms[roomId]
+                    const totalOpponentHitCells = rooms[roomId].fleets[opponent].ships
+                        .reduce((sum, ship) => sum + ship.hitCells.length, 0);
+                    const totalPlayerHitCells = rooms[roomId].fleets[player].ships
+                        .reduce((sum, ship) => sum + ship.hitCells.length, 0);
+
+                    gamesLogs[roomId] = {};
+                    gamesLogs[roomId].createdAt = rooms[roomId].createdAt;
+                    gamesLogs[roomId].endedAt = new Date();
+                    gamesLogs[roomId].players = rooms[roomId].players;
+                    gamesLogs[roomId].winnerName = player;
+                    gamesLogs[roomId].scores = {[opponent]: totalPlayerHitCells, [player]: totalOpponentHitCells};
+
+                    io.in(roomId).emit('game-over', {winner: player});
+
+                    delete rooms[roomId];
+                    console.log(rooms)
+
+                    return io.emit('existing-rooms', {
+                        rooms: Object.keys(rooms).map(room => ({
+                            id: room,
+                            playersLength: rooms[room].players.length
+                        }))
+                    })
                 }
             }
         }
 
         if (result === 'miss') {
             rooms[roomId].turn = opponent;
-            io.in(roomId).emit('turn-changed', { turn: opponent });
+            io.in(roomId).emit('turn-changed', {turn: opponent});
         }
 
         console.log(`[FIRE]:\tFire result\t${result}`)
 
-        socket.emit('fire-response', { pos, result, turn: rooms[roomId].turn });
-        socket.to(roomId).emit('incoming-fire', { target: opponent, pos, result });
+        socket.emit('fire-response', {pos, result, turn: rooms[roomId].turn});
+        socket.to(roomId).emit('incoming-fire', {target: opponent, pos, result});
     });
 
     socket.on('disconnect', () => {
         console.log(`❌ \tClient disconnected: ${socket.id}`);
-        socket.broadcast.emit('game-end');
         // gameState.fleets = {}
         // gameState.turn = 'waiting'
         // gameState.started = false
         // gameState.players = []
-    });
-
-    cron.schedule('*/2 * * * * *', () => {
-        const roomsNames = Object.keys(rooms)
-        roomsNames.forEach(n => io.in(rooms[n]).emit('ping', 'pong'))
     });
 });
 
