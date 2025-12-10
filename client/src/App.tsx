@@ -14,7 +14,8 @@ import { GameSocketActions, getGameSocket } from '@/shared/hooks/useGameSocket';
 
 import { EnterRoomForm } from './Widgets/EnterRoomForm';
 
-const SOCKET_URL = 'http://192.168.0.187:5000';
+// const SOCKET_URL = 'http://192.168.0.187:5000';
+const SOCKET_URL = 'http://localhost:5000';
 
 function App() {
     const dispatch = useAppDispatch();

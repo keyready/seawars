@@ -38,7 +38,7 @@ export const useGameActions = () => {
             return;
         }
 
-        const handleFireResponse = ({ pos, result, turn }: FireResult) => {
+        const handleFireResponse = ({ pos, result }: FireResult) => {
             console.log(`[SOCKET] Fire response:`, { pos, result });
 
             const updated = [...enemyGameboard];
@@ -48,8 +48,6 @@ export const useGameActions = () => {
                     ? CellState.Hit
                     : CellState.Miss;
 
-            console.log('после попадания', updated);
-
             if (result === CellState.Destroyed) {
                 const destroyedShip = setShipDestroyed(updated, pos);
                 dispatch(
@@ -58,7 +56,6 @@ export const useGameActions = () => {
             } else {
                 dispatch(GameboardActions.setGameboard({ board: updated, target: 'enemyBoard' }));
             }
-            dispatch(GameboardActions.setCurrentTurn(turn === currentName ? 'me' : 'enemy'));
         };
         const handleIncomingFire = ({ pos, result, target }: FireResult) => {
             console.log(`[SOCKET] Incoming Fire:`, { pos, result });
@@ -73,6 +70,7 @@ export const useGameActions = () => {
         const handleTurnChanged = ({ turn }: { turn: CurrentPlayer }) => {
             console.log(`[SOCKET] Turn changed:`, turn);
             dispatch(GameboardActions.setCurrentTurn(turn === currentName ? 'me' : 'enemy'));
+            dispatch(GameboardActions.setPhase('battle'));
         };
 
         const handleGameStart = ({ turn }: { turn: CurrentPlayer }) => {
