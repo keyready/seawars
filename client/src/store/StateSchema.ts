@@ -4,11 +4,8 @@ import type { AxiosInstance } from 'axios';
 
 import type { GameBoardSchema } from '@/entities/GameBoard';
 
-import type { GameSocketSchema } from '@/shared/hooks/useGameSocket';
-
 export interface StateSchema {
     board: GameBoardSchema;
-    gameSocket: GameSocketSchema;
 
     // asynchronous reducers
 }

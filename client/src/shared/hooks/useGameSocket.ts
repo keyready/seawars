@@ -1,3 +1,5 @@
+import { addToast } from '@heroui/react';
+
 import { useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -16,12 +18,21 @@ import type { Cell } from '@/entities/Ship';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 
-import { getGameSocket } from './model/selectors/getSocket';
-import type { FireResult } from './types';
+import { useSocket } from '@/store/SocketContext';
+
+interface FireResult {
+    pos: { r: number; c: number };
+    result: CellState;
+    target: string;
+    turn?: CurrentPlayer;
+    sunkShipId?: string;
+}
+
+let globalSocketSubscribed = false;
 
 export const useGameActions = () => {
     const dispatch = useAppDispatch();
-    const socket = useSelector(getGameSocket);
+    const socket = useSocket();
 
     const ownerGameboard = useSelector(getOwnerGameboard);
     const ownerFleet = useSelector(getOwnerFleet);
@@ -30,6 +41,9 @@ export const useGameActions = () => {
     const currentRoom = useSelector(getGameRoom);
 
     useEffect(() => {
+        if (!socket || globalSocketSubscribed) return;
+        globalSocketSubscribed = true;
+
         if (!socket) {
             console.warn("Couldn't create socket connection");
             return;
@@ -98,11 +112,14 @@ export const useGameActions = () => {
         const handleGameStart = ({ turn }: { turn: CurrentPlayer }) => {
             dispatch(GameboardActions.setCurrentTurn(turn === currentName ? 'me' : 'enemy'));
             dispatch(GameboardActions.setPhase('battle'));
+            addToast({ color: 'secondary', title: 'Игра началась!' });
         };
 
         const handleGameOver = ({ winner }: { winner: string }) => {
             dispatch(GameboardActions.reset());
-            if (currentRoom) alert(`Победитель - ${winner}`);
+            if (currentRoom) {
+                addToast({ color: 'warning', title: `Победитель - ${winner}` });
+            }
         };
 
         const handleEndGame = () => {
@@ -110,18 +127,33 @@ export const useGameActions = () => {
             dispatch(GameboardActions.reset());
         };
 
+        const handlePlayerJoined = ({ player }: { player: string }) => {
+            addToast({ color: 'warning', title: `В комнату зашел ${player}` });
+        };
+
+        const handlePlayerLeave = ({ player }: { player: string }) => {
+            addToast({ color: 'danger', title: `${player} покинул игру` });
+        };
+
         socket.on('fire-response', handleFireResponse);
         socket.on('incoming-fire', handleIncomingFire);
         socket.on('turn-changed', handleTurnChanged);
         socket.on('game-start', handleGameStart);
+        socket.on('player-joined', handlePlayerJoined);
+        socket.on('leave-room', handlePlayerLeave);
         socket.on('game-end', handleEndGame);
         socket.on('game-over', handleGameOver);
-        socket.on('error', ({ message }: { message: string }) => alert(message));
+        socket.on('error', ({ message }: { message: string }) => {
+            addToast({ title: message, color: 'danger' });
+        });
 
         return () => {
+            globalSocketSubscribed = false;
             socket.off('fire-response', handleFireResponse);
             socket.off('incoming-fire', handleIncomingFire);
             socket.off('turn-changed', handleTurnChanged);
+            socket.off('player-joined', handlePlayerJoined);
+            socket.off('leave-room', handlePlayerLeave);
             socket.off('game-start', handleGameStart);
             socket.off('game-end', handleEndGame);
             socket.off('game-over', handleGameOver);

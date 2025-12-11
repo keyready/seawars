@@ -3,7 +3,6 @@ import { configureStore, type ReducersMapObject } from '@reduxjs/toolkit';
 import { GameboardReducer } from '@/entities/GameBoard';
 
 import { $api } from '@/shared/api';
-import { GameSocketReducer } from '@/shared/hooks/useGameSocket';
 
 import { createReducerManager } from './reducerManager';
 import type { StateSchema } from './StateSchema';
@@ -16,7 +15,6 @@ export function CreateReduxStore(
         ...lazyReducers,
 
         board: GameboardReducer,
-        gameSocket: GameSocketReducer,
     };
 
     const reducerManager = createReducerManager(rootReducers);

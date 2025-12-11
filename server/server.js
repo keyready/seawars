@@ -2,21 +2,9 @@ const express = require('express');
 const http = require('http');
 const {Server} = require('socket.io');
 const {v4: uuidv4} = require('uuid');
-const cron = require('node-cron')
-
-function findShipAtCell(ships, pos) {
-    const foundShip = ships.find(
-        (ship, index) => ship.cells.some(cell => cell.c === pos.r && cell.r === pos.c)
-    )
-
-    if (!foundShip) return {ship: undefined, hitCell: undefined};
-
-    const hitCell = foundShip.cells.find(cell => cell.r === pos.r && cell.c === pos.c)
-
-    return {foundShip, hitCell}
-}
-
-const rooms = {}
+const {findShipAtCell} = require('./lib')
+const mongoose = require('mongoose');
+const {Gamelogs, Room} = require('./models/index')
 
 const app = express();
 const server = http.createServer(app);
@@ -24,201 +12,252 @@ const io = new Server(server, {
     cors: {origin: '*'},
 });
 
-const gamesLogs = {}
-
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
     console.log(`✅ \tNew client connected: ${socket.id}`);
 
-    if (Object.keys(gamesLogs).length) {
-        socket.emit('leaderboard', {
-            games: Object.keys(gamesLogs).filter(Boolean).map(game => {
-                if (!gamesLogs[game]?.endedAt) return undefined
-                return ({
-                    id: game,
-                    players: gamesLogs[game].players,
-                    winnerName: gamesLogs[game].winnerName,
-                    createdAt: gamesLogs[game].createdAt,
-                    endedAt: gamesLogs[game].endedAt,
-                    scores: gamesLogs[game].scores,
-                });
-            })
-        })
+    try {
+        const [leaderboard, existingRooms] = await Promise.all([
+            Gamelogs.find({}).lean(),
+            Room.find({}).select('id players').lean()
+        ]);
+
+        if (leaderboard.length) {
+            socket.emit('leaderboard', {games: leaderboard});
+        }
+        if (existingRooms.length) {
+            socket.emit('existing-rooms', {rooms: existingRooms});
+        }
+    } catch (err) {
+        console.error('Error on connection init:', err);
     }
 
-    if (Object.keys(rooms).length) {
-        socket.emit('existing-rooms', {
-            rooms: Object.keys(rooms).map(game => ({
-                id: game,
-                players: rooms[game].players.length
-            }))
-        })
-    }
+    socket.on('create-room', async ({name}) => {
+        const roomId = uuidv4();
 
-    socket.on('create-room', ({name}) => {
-        const roomId = uuidv4()
-        rooms[roomId] = {
-            fleets: {},
-            turn: 'waiting',
-            started: false,
-            players: [],
-            createdAt: new Date(),
-        }
-        console.log(`✅ \tRoom created: ${roomId}`)
+        try {
+            const newRoom = new Room({
+                id: roomId,
+                fleets: {},
+                turn: 'waiting',
+                started: false,
+                players: [name],
+                playersUUID: [socket.id],
+                createdAt: new Date(),
+            });
 
-        console.log(`✅ \tPlayer ${name} joined the room: ${roomId}`)
-        rooms[roomId].players.push(name);
+            await newRoom.save();
 
-        socket.join(roomId)
-        io.in(roomId).emit('room-created', {roomId})
+            socket.join(roomId);
 
-        io.emit('existing-rooms', {
-            rooms: Object.keys(rooms).map(room => ({
-                id: room,
-                playersLength: rooms[room].players.length
-            }))
-        })
-    })
-
-    socket.on('join-room', ({roomId, name}) => {
-        if (!rooms.hasOwnProperty(roomId)) {
-            return socket.emit('error', {message: `There is no room with ID = ${roomId} `})
-        }
-        if (rooms[roomId].players.length >= 2) {
-            return socket.emit('error', {message: `There are already 2 players in the room `})
-        }
-
-        rooms[roomId].players.push(name);
-        console.log(`✅ \tPlayer ${name} joined the room: ${roomId}`)
-
-        socket.join(roomId);
-        socket.emit('joined-room', {roomId, player: name});
-        io.to(roomId).emit('player-joined', {player: name});
-
-        io.emit('existing-rooms', {
-            rooms: Object.keys(rooms).map(room => ({
-                id: room,
-                playersLength: rooms[room].players.length
-            }))
-        })
-    })
-
-    socket.on('submit-fleet', ({fleet, player, roomId}) => {
-        if (!rooms.hasOwnProperty(roomId)) {
-            socket.emit('error', {message: `There is no room with ID = ${roomId} `})
-        }
-
-        if (rooms[roomId].fleets[player]) {
-            return socket.emit('error', {message: 'Fleet already submitted'});
-        }
-
-        rooms[roomId].fleets[player] = {
-            ships: fleet.filter(Boolean),
-            ready: true
-        };
-        console.log(`⚓ \t${player} submitted fleet`);
-
-        if (rooms[roomId].players.length === 2 && Object.keys(rooms[roomId].fleets).every(player => rooms[roomId].fleets[player].ready)) {
-            rooms[roomId].started = true;
-            rooms[roomId].turn = player;
-            console.log(`▶️ \tGame started in room #${roomId}, turn ${rooms[roomId].turn}`);
-            io.in(roomId).emit('game-start', {turn: player});
+            io.in(roomId).emit('room-created', {roomId});
+            io.emit('existing-rooms', {
+                rooms: await Room.find({}).select('id players').lean(),
+            });
+        } catch (err) {
+            console.error('Error creating room:', err);
+            socket.emit('error', {message: 'Failed to create room'});
         }
     });
 
-    socket.on('fire', ({pos, player, roomId}) => {
-        if (!rooms[roomId].started) {
-            socket.emit('error', {message: 'Game not started'});
-            return;
+    socket.on('join-room', async ({roomId, name}) => {
+        try {
+            const room = await Room.findOne({id: roomId});
+            if (!room) return socket.emit('error', {message: `Room ${roomId} not found`});
+            if (room.players.length >= 2) return socket.emit('error', {message: 'Room is full'});
+
+            room.players.push(name);
+            room.playersUUID.push(socket.id);
+            await room.save();
+
+            socket.join(roomId);
+            socket.emit('joined-room', {roomId, player: name});
+            socket.to(roomId).emit('player-joined', { player: name });
+
+            io.emit('existing-rooms', {
+                rooms: await Room.find({}).select('id players').lean(),
+            });
+        } catch (err) {
+            console.error('Error joining room:', err);
+            socket.emit('error', {message: 'Failed to join room'});
         }
+    });
 
-        if (player !== rooms[roomId].turn) {
-            socket.emit('error', {message: `Not your turn (current: ${rooms[roomId].turn})`});
-            return;
-        }
+    socket.on('submit-fleet', async ({fleet, player, roomId}) => {
+            try {
+                let room = await Room.findOne({id: roomId});
+                if (!room) return socket.emit('error', {message: `Room ${roomId} not found`});
 
+                if (Object.hasOwn(room.fleets, player)) return socket.emit('error', {message: 'Fleet already submitted'});
 
-        const opponent = player === rooms[roomId].players[0] ? rooms[roomId].players[1] : rooms[roomId].players[0];
-        const opponentFleet = rooms[roomId].fleets[opponent]?.ships;
+                const ships = fleet.filter(Boolean).map(ship => ({
+                    head: ship.head,
+                    size: ship.size,
+                    orientation: ship.orientation,
+                    hitCells: [],
+                    cells: ship.cells,
+                }));
 
-        if (!opponentFleet) {
-            socket.emit('error', {message: 'Opponent fleet not ready'});
-            return;
-        }
+                await Room.updateOne({id: roomId}, {
+                    fleets: {
+                        ...room.fleets,
+                        [player]: {
+                            ships: ships,
+                            ready: true
+                        }
+                    }
+                })
+                console.log(`⚓ \t${player} submitted fleet`);
 
-        opponentFleet.forEach(s => console.log(s))
+                room = await Room.findOne({id: roomId});
 
-        const {foundShip, hitCell} = findShipAtCell(opponentFleet, pos);
+                const fleetsReady = room.players.length === 2 &&
+                    room.players.every(p => Object.hasOwn(room.fleets, p) && room.fleets[p]?.ready);
 
-        let result = 'miss';
-
-        if (foundShip) {
-            result = 'hit';
-
-            foundShip.hitCells = [...foundShip.hitCells, hitCell];
-            rooms[roomId].fleets[opponent].ships = [
-                ...rooms[roomId].fleets[opponent]?.ships.map(ship => ship.id === foundShip.id ? foundShip : ship)
-            ]
-
-            if (foundShip.hitCells.length === foundShip.cells.length) {
-                result = 'destroyed'
-
-                if (rooms[roomId].fleets[opponent].ships.every(ship => ship.cells.length === ship.hitCells.length)) {
-                    const totalOpponentHitCells = rooms[roomId].fleets[opponent].ships
-                        .reduce((sum, ship) => sum + ship.hitCells.length, 0);
-                    const totalPlayerHitCells = rooms[roomId].fleets[player].ships
-                        .reduce((sum, ship) => sum + ship.hitCells.length, 0);
-
-                    gamesLogs[roomId] = {};
-                    gamesLogs[roomId].createdAt = rooms[roomId].createdAt;
-                    gamesLogs[roomId].endedAt = new Date();
-                    gamesLogs[roomId].players = rooms[roomId].players;
-                    gamesLogs[roomId].winnerName = player;
-                    gamesLogs[roomId].scores = {[opponent]: totalPlayerHitCells, [player]: totalOpponentHitCells};
-
-                    io.in(roomId).emit('game-over', {winner: player});
-
-                    delete rooms[roomId];
-                    console.log(rooms)
-
-                    return io.emit('existing-rooms', {
-                        rooms: Object.keys(rooms).map(room => ({
-                            id: room,
-                            playersLength: rooms[room].players.length
-                        }))
+                if (fleetsReady) {
+                    room.started = true;
+                    room.turn = room.players[0];
+                    await Room.updateOne({id: roomId}, {
+                        started: true,
+                        turn: room.players[0]
                     })
+
+                    console.log(`▶️ \tGame started in room #${roomId}, turn ${room.turn}`);
+                    io.in(roomId).emit('game-start', {turn: room.turn});
                 }
+            } catch
+                (err) {
+                console.error('Error submitting fleet:', err);
+                socket.emit('error', {message: 'Failed to submit fleet'});
             }
         }
+    )
+    ;
 
-        if (result === 'miss') {
-            rooms[roomId].turn = opponent;
-            io.in(roomId).emit('turn-changed', {turn: opponent});
+    socket.on('fire', async ({pos, player, roomId}) => {
+        try {
+            const room = await Room.findOne({id: roomId});
+            if (!room || !room.started) {
+                return socket.emit('error', {message: 'Game not started or room not found'});
+            }
+
+            if (player !== room.turn) {
+                return socket.emit('error', {message: `Not your turn (current: ${room.turn})`});
+            }
+
+            const opponent = player === room.players[0] ? room.players[1] : room.players[0];
+            if (!room.fleets?.[opponent]?.ready) {
+                return socket.emit('error', {message: 'Opponent fleet not ready'});
+            }
+
+            const opponentFleet = room.fleets[opponent].ships;
+            const { foundShip, hitCell } = findShipAtCell(opponentFleet, pos);
+
+            console.log(foundShip, hitCell)
+
+            let result = 'miss';
+            let gameEnded = false;
+            let winner = null;
+
+            if (foundShip) {
+                result = 'hit';
+
+                // Найдём корабль в fleets[opponent].ships и обновим его hitCells
+                const shipToUpdate = room.fleets[opponent].ships.find(s => s.id === foundShip.id);
+                if (shipToUpdate) {
+                    shipToUpdate.hitCells.push(hitCell);
+
+                    // Проверка на уничтожение
+                    if (shipToUpdate.hitCells.length === shipToUpdate.cells.length) {
+                        result = 'destroyed';
+
+                        // Проверка на победу
+                        const allDestroyed = room.fleets[opponent].ships.every(
+                            s => s.hitCells.length === s.cells.length
+                        );
+
+                        if (allDestroyed) {
+                            result = 'game-over';
+                            gameEnded = true;
+                            winner = player;
+
+                            // Подсчёт очков
+                            const totalOpponentHitCells = room.fleets[opponent].ships.reduce((sum, s) => sum + s.hitCells.length, 0);
+                            const totalPlayerHitCells = room.fleets[player]?.ships?.reduce((sum, s) => sum + s.hitCells.length, 0) || 0;
+
+                            // Лог игры
+                            const gameLog = new Gamelogs({
+                                id: roomId,
+                                players: room.players,
+                                winnerName: winner,
+                                scores: {
+                                    [opponent]: totalPlayerHitCells,
+                                    [player]: totalOpponentHitCells,
+                                },
+                                createdAt: room.createdAt,
+                                endedAt: new Date(),
+                            });
+
+                            await gameLog.save();
+
+                            io.in(roomId).emit('game-over', {winner});
+                            io.emit('leaderboard', {
+                                games: await Gamelogs.find({}).lean(),
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Смена хода, если промах или уничтожение без победы
+            if (result === 'miss') {
+                room.turn = opponent; // передаем ход
+            }
+
+            // Сохраняем обновлённую комнату
+            if (!gameEnded) {
+                room.markModified('fleets');
+                await room.save()
+            } else {
+                // Удаляем комнату после победы
+                await Room.deleteOne({id: roomId});
+            }
+
+            // Рассылка
+            socket.emit('fire-response', {pos, result, turn: room.turn});
+            socket.to(roomId).emit('incoming-fire', {target: opponent, pos, result});
+
+            if (!gameEnded) {
+                io.in(roomId).emit('turn-changed', {turn: room.turn});
+            }
+
+            // Обновим existing-rooms
+            io.emit('existing-rooms', {
+                rooms: await Room.find({}).select('id players').lean(),
+            });
+
+        } catch (err) {
+            console.error('Error during fire:', err);
+            socket.emit('error', {message: 'Failed to process fire'});
         }
-
-        console.log(`[FIRE]:\tFire result\t${result}`)
-
-        socket.emit('fire-response', {pos, result, turn: rooms[roomId].turn});
-        socket.to(roomId).emit('incoming-fire', {target: opponent, pos, result});
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
         console.log(`❌ \tClient disconnected: ${socket.id}`);
+        const playerRoom = await Room.findOne({ playersUUID: socket.id })
+        if (playerRoom && playerRoom?.id) {
+            const leavedPlayerName = playerRoom.players[playerRoom.playersUUID.findIndex(id => id === socket.id)]
+            socket.in(playerRoom.id).emit('leave-room', { player:  leavedPlayerName})
+            playerRoom.playersUUID.filter(p => p === socket.id)
+            playerRoom.players.filter(p => p === leavedPlayerName)
+            playerRoom.save()
+        }
     });
 });
 
-// cron.schedule('*/2 * * * * *', () => {
-//     const roomsNames = Object.keys(rooms)
-//     console.log('[WW]: Gamestate:')
-//     roomsNames.forEach(n => {
-//         console.log(`\t-- ${n}:`);
-//         console.log(`\t\t players: ${rooms[n].players.join(', ')}`)
-//         console.log(`\t\t turn: ${rooms[n].turn}`)
-//     })
-// });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
+    await mongoose.connect('mongodb://127.0.0.1:27017/seawar');
+
     console.log(`🚀 \tSea Battle Server (static room) running on http://localhost:${PORT}`);
-    console.log(`   \tRoom: 'main-room'`);
-    console.log(`   \tPlayers: 'player1', 'player2'`);
 });

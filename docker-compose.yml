@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongo:
     image: mongo:latest
@@ -11,19 +9,12 @@ services:
   server:
     build: ./server
     ports:
-      - "4000:4000"
+      - "5000:5000"
     environment:
       - MONGO_URI=mongodb://mongo:27017/seawar
-      - PORT=4000
+      - PORT=5000
     depends_on:
       - mongo
-
-  client:
-    build: ./client
-    ports:
-      - "80:80"
-    depends_on:
-      - server
 
 volumes:
   mongo-data:

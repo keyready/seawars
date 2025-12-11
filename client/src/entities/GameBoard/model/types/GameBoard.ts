@@ -26,7 +26,7 @@ export interface GameboardPayload {
 
 export interface Room {
     id: string;
-    playersLength: number;
+    players: string[];
 }
 
 export interface Leaderboard {

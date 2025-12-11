@@ -23,6 +23,7 @@ export function createReducerManager(
             if (keysToRemove.length > 0) {
                 state = { ...state };
                 keysToRemove.forEach((key) => {
+                    // @ts-expect-error expect-error
                     delete state[key];
                 });
                 keysToRemove = [];
