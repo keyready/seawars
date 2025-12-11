@@ -1,28 +1,49 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { createEmptyBoard } from '../lib/createEmptyBoard';
+import type { Cell } from '@/entities/Ship';
+import { ShipOrientation, type ShipSize } from '@/entities/Ship';
+
+import { generateShips } from '../lib/generateFleetInitialPositions';
+import { isCellUnique } from '../lib/isCellUnique';
+import { getShipCells } from '../lib/utils';
 import {
     type BattlePhase,
     type CurrentPlayer,
-    type FleetPayload,
-    type GameboardPayload,
+    type Fleet,
     type GameBoardSchema,
     type Leaderboard,
     type Room,
 } from '../types/GameBoard';
 
+const initialOwnerFleet: Fleet = generateShips()
+    .reverse()
+    .map((ship, index) => {
+        const head = { r: 10, c: 9 - index };
+        return {
+            id: ship.id,
+            size: ship.size as ShipSize,
+            orientation: ShipOrientation.Horizontal,
+            head,
+            cells: getShipCells(head, ship.size, ShipOrientation.Horizontal),
+            hitCells: [],
+        };
+    });
+
 const initialState: GameBoardSchema = {
     ownerBoard: {
-        grid: createEmptyBoard(),
-        fleet: [],
+        grid: { missCells: [], hitCells: [] },
+        fleet: initialOwnerFleet,
     },
     enemyBoard: {
-        grid: createEmptyBoard(),
-        fleet: [],
+        missCells: [],
+        hitCells: [],
     },
+
     name: '',
+    isPlayerReady: false,
     phase: 'placing',
     currentPlayer: 'me',
+
     room: undefined,
     existingRooms: undefined,
     leaderboard: undefined,
@@ -32,12 +53,42 @@ const GameStateSlice = createSlice({
     name: 'GameStateSlice',
     initialState,
     reducers: {
-        setFleet: (state, action: PayloadAction<FleetPayload>) => {
-            state[action.payload.target].fleet = action.payload.fleet;
+        setEnemyMissCells: (state, action: PayloadAction<Cell>) => {
+            if (isCellUnique(state.enemyBoard.missCells, action.payload)) {
+                state.enemyBoard.missCells = [...state.enemyBoard.missCells, action.payload];
+            }
         },
-        setGameboard: (state, action: PayloadAction<GameboardPayload>) => {
-            state[action.payload.target].grid = action.payload.board;
+        setEnemyHitCells: (state, action: PayloadAction<Cell>) => {
+            if (isCellUnique(state.enemyBoard.hitCells, action.payload)) {
+                state.enemyBoard.hitCells = [...state.enemyBoard.hitCells, action.payload];
+            }
         },
+        setOwnerMissCells: (state, action: PayloadAction<Cell>) => {
+            if (isCellUnique(state.ownerBoard.grid.missCells, action.payload)) {
+                state.ownerBoard.grid.missCells = [
+                    ...state.ownerBoard.grid.missCells,
+                    action.payload,
+                ];
+            }
+        },
+        setOwnerHitCells: (state, action: PayloadAction<Cell>) => {
+            if (isCellUnique(state.ownerBoard.grid.hitCells, action.payload)) {
+                state.ownerBoard.grid.hitCells = [
+                    ...state.ownerBoard.grid.hitCells,
+                    action.payload,
+                ];
+            }
+        },
+
+        setOwnerFleet: (state, action: PayloadAction<Fleet>) => {
+            state.ownerBoard.fleet = action.payload;
+        },
+
+        setPlayerReady: (state) => {
+            state.isPlayerReady = true;
+        },
+
+        // old
         setPhase: (state, action: PayloadAction<BattlePhase>) => {
             state.phase = action.payload;
         },
@@ -58,12 +109,12 @@ const GameStateSlice = createSlice({
         },
         reset: (state) => {
             state.ownerBoard = {
-                grid: createEmptyBoard(),
+                grid: { hitCells: [], missCells: [] },
                 fleet: [],
             };
             state.enemyBoard = {
-                grid: createEmptyBoard(),
-                fleet: [],
+                hitCells: [],
+                missCells: [],
             };
             state.name = '';
             state.phase = 'placing';

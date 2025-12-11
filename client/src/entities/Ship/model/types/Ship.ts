@@ -1,3 +1,4 @@
+export type Cell = { r: number; c: number };
 export type ShipSize = 1 | 2 | 3 | 4;
 
 export enum ShipOrientation {
@@ -13,13 +14,9 @@ export interface CellPosition {
 export interface Ship {
     id: string;
 
-    head: CellPosition;
+    head: Cell;
     size: ShipSize;
     orientation: ShipOrientation;
-    hitCells: CellPosition[];
-}
-
-export enum CellStatus {
-    Intact = 'intact', // целая
-    Damaged = 'damaged', // подстрелена
+    hitCells: Cell[];
+    cells: Cell[];
 }

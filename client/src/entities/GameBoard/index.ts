@@ -1,4 +1,10 @@
-export type { GameBoardSchema, GameBoard, GameBoardType } from './model/types/GameBoard';
+export type {
+    GameBoardSchema,
+    GameBoard,
+    GameBoardType,
+    Leaderboard,
+    Room,
+} from './model/types/GameBoard';
 export { CellState } from './model/types/GameBoard';
 export { GameboardActions, GameboardReducer } from './model/slice/GameBoardSlice';
 
@@ -7,18 +13,23 @@ export {
     type Ship,
     ShipOrientation,
     type CellPosition,
-    CellStatus,
 } from '../Ship/model/types/Ship';
 
 export {
     getOwnerGameboard,
     getEnemyGameboard,
-    getEnemyFleet,
     getCurrentPlayerName,
     getOwnerFleet,
+    getCurrentTurn,
+    getGameRoom,
+    getGamePhase,
+    getGamingRooms,
+    getLeaderboards,
 } from './model/selectors/getGameBoard';
 
-export { fleetToGrid } from './model/lib/fleetToGrid';
-export { generateRandomFleet } from './model/lib/generateFleet';
-export { getCurrentTurn } from './model/selectors/getGameBoard';
 export type { BattlePhase } from './model/types/GameBoard';
+
+export { DroppableShipBoard } from './ui/DroppableShipsBoard';
+
+export { getSkirtAroundDestroyedShip } from './model/lib/getSkirtAroundDestroyedShip';
+export type { CurrentPlayer } from './model/types/GameBoard';

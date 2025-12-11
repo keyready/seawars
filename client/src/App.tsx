@@ -1,22 +1,20 @@
-import { cn, Snippet } from '@heroui/react';
+import { cn } from '@heroui/react';
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 
-import { GameboardActions } from '@/entities/GameBoard';
-import { getGameRoom } from '@/entities/GameBoard/model/selectors/getGameBoard';
-import type { Leaderboard, Room } from '@/entities/GameBoard/model/types/GameBoard';
-import { Gameboard } from '@/entities/GameBoard/ui/GameBoard';
+import { EnterRoomForm } from '@/widgets/EnterRoomForm';
+
+import type { Leaderboard, Room } from '@/entities/GameBoard';
+import { DroppableShipBoard, GameboardActions, getGameRoom } from '@/entities/GameBoard';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { GameSocketActions, getGameSocket } from '@/shared/hooks/useGameSocket';
 
-import { EnterRoomForm } from './Widgets/EnterRoomForm';
-
-// const SOCKET_URL = 'http://172.100.1.85:5000';
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = 'http://172.100.1.85:5000';
+// const SOCKET_URL = 'http://localhost:5000';
 
 function App() {
     const dispatch = useAppDispatch();
@@ -86,31 +84,16 @@ function App() {
                         initial={{ opacity: 0, y: -50 }}
                         exit={{ opacity: 0, y: -50 }}
                         animate={{ opacity: 1, y: 0 }}
+                        className="flex items-start justify-center gap-8 md:flex-row"
                     >
-                        <div className="mb-10 flex w-full items-center justify-center gap-3">
-                            <h2
-                                className={cn(
-                                    'bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text',
-                                    'text-2xl text-transparent italic',
-                                )}
-                            >
-                                Комната
-                            </h2>
-                            <Snippet className="bg-blue-300" size="sm">
-                                {roomId}
-                            </Snippet>
+                        <div className="flex flex-col items-center justify-center gap-6 text-center">
+                            <h2 className="mb-2 text-lg font-semibold">Ваш флот</h2>
+                            <DroppableShipBoard type="own" />
                         </div>
 
-                        <div className="flex flex-col items-start justify-center gap-8 md:flex-row">
-                            <div className="flex flex-col items-center justify-center gap-6 text-center">
-                                <h2 className="mb-2 text-lg font-semibold">Ваш флот</h2>
-                                <Gameboard type="me" />
-                            </div>
-
-                            <div className="flex flex-col gap-6 text-center">
-                                <h2 className="mb-2 text-lg font-semibold">Флот противника</h2>
-                                <Gameboard type="enemy" />
-                            </div>
+                        <div className="flex flex-col gap-6 text-center">
+                            <h2 className="mb-2 text-lg font-semibold">Флот противника</h2>
+                            <DroppableShipBoard type="enemy" />
                         </div>
                     </motion.div>
                 ) : (

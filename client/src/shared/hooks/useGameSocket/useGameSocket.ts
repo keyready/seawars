@@ -1,19 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 import {
     CellState,
-    fleetToGrid,
+    type CurrentPlayer,
     GameboardActions,
-    generateRandomFleet,
     getCurrentPlayerName,
     getEnemyGameboard,
+    getGameRoom,
     getOwnerFleet,
     getOwnerGameboard,
+    getSkirtAroundDestroyedShip,
 } from '@/entities/GameBoard';
-import { setShipDestroyed } from '@/entities/GameBoard/model/lib/setShipDestroyed';
-import { getGameRoom } from '@/entities/GameBoard/model/selectors/getGameBoard';
-import type { CurrentPlayer } from '@/entities/GameBoard/model/types/GameBoard';
+import type { Cell } from '@/entities/Ship';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 
@@ -30,8 +29,6 @@ export const useGameActions = () => {
     const currentName = useSelector(getCurrentPlayerName);
     const currentRoom = useSelector(getGameRoom);
 
-    const [isPlayerReady, setIsPlayerReady] = useState<boolean>(false);
-
     useEffect(() => {
         if (!socket) {
             console.warn("Couldn't create socket connection");
@@ -41,32 +38,57 @@ export const useGameActions = () => {
         const handleFireResponse = ({ pos, result }: FireResult) => {
             console.log(`[SOCKET] Fire response:`, { pos, result });
 
-            const updated = [...enemyGameboard];
-            updated[pos.r] = [...enemyGameboard[pos.r]];
-            updated[pos.r][pos.c] =
-                result === CellState.Hit || result === CellState.Destroyed
-                    ? CellState.Hit
-                    : CellState.Miss;
+            if (result === CellState.Miss) {
+                dispatch(GameboardActions.setEnemyMissCells(pos));
+                return;
+            }
+
+            if (result === CellState.Hit) {
+                dispatch(GameboardActions.setEnemyHitCells(pos));
+                return;
+            }
 
             if (result === CellState.Destroyed) {
-                const destroyedShip = setShipDestroyed(updated, pos);
-                dispatch(
-                    GameboardActions.setGameboard({ board: destroyedShip, target: 'enemyBoard' }),
+                dispatch(GameboardActions.setEnemyHitCells(pos));
+
+                const skirtAroundDestroyedShip = getSkirtAroundDestroyedShip(
+                    [...enemyGameboard.hitCells, pos],
+                    pos,
                 );
-            } else {
-                dispatch(GameboardActions.setGameboard({ board: updated, target: 'enemyBoard' }));
+
+                skirtAroundDestroyedShip.map((cell) =>
+                    dispatch(GameboardActions.setEnemyMissCells(cell)),
+                );
             }
         };
-        const handleIncomingFire = ({ pos, result, target }: FireResult) => {
+
+        const handleIncomingFire = ({ pos, result }: FireResult) => {
             console.log(`[SOCKET] Incoming Fire:`, { pos, result });
 
-            if (target === currentName) {
-                const updated = [...ownerGameboard];
-                updated[pos.r] = [...ownerGameboard[pos.r]];
-                updated[pos.r][pos.c] = result;
-                dispatch(GameboardActions.setGameboard({ board: updated, target: 'ownerBoard' }));
+            if (result === CellState.Miss) {
+                dispatch(GameboardActions.setOwnerMissCells(pos));
+                return;
+            }
+
+            if (result === CellState.Hit) {
+                dispatch(GameboardActions.setOwnerHitCells(pos));
+                return;
+            }
+
+            if (result === CellState.Destroyed) {
+                dispatch(GameboardActions.setOwnerHitCells(pos));
+
+                const skirtAroundDestroyedShip = getSkirtAroundDestroyedShip(
+                    [...ownerGameboard.hitCells, pos],
+                    pos,
+                );
+
+                skirtAroundDestroyedShip.map((cell) =>
+                    dispatch(GameboardActions.setOwnerMissCells(cell)),
+                );
             }
         };
+
         const handleTurnChanged = ({ turn }: { turn: CurrentPlayer }) => {
             console.log(`[SOCKET] Turn changed:`, turn);
             dispatch(GameboardActions.setCurrentTurn(turn === currentName ? 'me' : 'enemy'));
@@ -105,48 +127,34 @@ export const useGameActions = () => {
             socket.off('game-over', handleGameOver);
             socket.off('error');
         };
-    }, [currentName, dispatch, enemyGameboard, ownerGameboard, socket]);
+    }, [currentName, currentRoom, dispatch, enemyGameboard, ownerGameboard, socket]);
 
     const handleFire = useCallback(
-        (r: number, c: number) => {
-            console.log(`[SOCKET] Try to sent cell: ${r} - ${c}`);
+        (cell: Cell) => {
+            console.log(`[SOCKET] Try to sent cell: ${cell.r} - ${cell.c}`);
             if (socket)
-                socket.emit('fire', { roomId: currentRoom, player: currentName, pos: { r, c } });
+                socket.emit('fire', { roomId: currentRoom, player: currentName, pos: cell });
             else console.warn("Couldn't create socket connection");
         },
         [currentName, currentRoom, socket],
     );
 
-    const handleGenerateFleet = useCallback(() => {
-        const generatedFleet = generateRandomFleet();
-        dispatch(GameboardActions.setFleet({ target: 'ownerBoard', fleet: generatedFleet }));
-        dispatch(
-            GameboardActions.setGameboard({
-                target: 'ownerBoard',
-                board: fleetToGrid(generatedFleet),
-            }),
-        );
-    }, [dispatch]);
-
     const handleSetGameReady = useCallback(() => {
-        setIsPlayerReady(true);
         if (socket) {
+            dispatch(GameboardActions.setPlayerReady());
             socket.emit('submit-fleet', {
                 fleet: ownerFleet,
                 player: currentName,
                 roomId: currentRoom,
             });
         } else console.warn("Couldn't create socket connection");
-    }, [currentName, currentRoom, ownerFleet, socket]);
+    }, [currentName, currentRoom, dispatch, ownerFleet, socket]);
 
     return {
-        generateFleet: handleGenerateFleet,
         startGame: handleSetGameReady,
         fire: handleFire,
 
         ownerGameboard,
         enemyGameboard,
-
-        isReady: isPlayerReady,
     };
 };

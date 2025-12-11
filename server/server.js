@@ -4,25 +4,14 @@ const {Server} = require('socket.io');
 const {v4: uuidv4} = require('uuid');
 const cron = require('node-cron')
 
-function computeShipCells(head, size, orientation) {
-    const cells = [];
-    for (let i = 0; i < size; i++) {
-        if (orientation === 'hor') {
-            cells.push({row: head.r, col: head.c + i});
-        } else if (orientation === 'ver') {
-            cells.push({row: head.r + i, col: head.c});
-        }
-    }
-    return cells;
-}
-
 function findShipAtCell(ships, pos) {
-    const foundShip = ships.find(ship =>
-        ship.cells.some(cell => cell.row === pos.r && cell.col === pos.c)
+    const foundShip = ships.find(
+        (ship, index) => ship.cells.some(cell => cell.c === pos.r && cell.r === pos.c)
     )
+
     if (!foundShip) return {ship: undefined, hitCell: undefined};
 
-    const hitCell = foundShip.cells.find(cell => cell.row === pos.r && cell.col === pos.c)
+    const hitCell = foundShip.cells.find(cell => cell.r === pos.r && cell.c === pos.c)
 
     return {foundShip, hitCell}
 }
@@ -32,7 +21,7 @@ const rooms = {}
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {origin: '*'}, // для разработки
+    cors: {origin: '*'},
 });
 
 const gamesLogs = {}
@@ -123,10 +112,7 @@ io.on('connection', (socket) => {
         }
 
         rooms[roomId].fleets[player] = {
-            ships: fleet.filter(Boolean).map(ship => ({
-                ...ship,
-                cells: computeShipCells(ship.head, ship.size, ship.orientation)
-            })),
+            ships: fleet.filter(Boolean),
             ready: true
         };
         console.log(`⚓ \t${player} submitted fleet`);
@@ -150,7 +136,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Определяем противника
+
         const opponent = player === rooms[roomId].players[0] ? rooms[roomId].players[1] : rooms[roomId].players[0];
         const opponentFleet = rooms[roomId].fleets[opponent]?.ships;
 
@@ -159,7 +145,8 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Проверяем попадание
+        opponentFleet.forEach(s => console.log(s))
+
         const {foundShip, hitCell} = findShipAtCell(opponentFleet, pos);
 
         let result = 'miss';
@@ -216,22 +203,18 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`❌ \tClient disconnected: ${socket.id}`);
-        // gameState.fleets = {}
-        // gameState.turn = 'waiting'
-        // gameState.started = false
-        // gameState.players = []
     });
 });
 
-cron.schedule('*/2 * * * * *', () => {
-    const roomsNames = Object.keys(rooms)
-    console.log('[WW]: Gamestate:')
-    roomsNames.forEach(n => {
-        console.log(`\t-- ${n}:`);
-        console.log(`\t\t players: ${rooms[n].players.join(', ')}`)
-        console.log(`\t\t turn: ${rooms[n].turn}`)
-    })
-});
+// cron.schedule('*/2 * * * * *', () => {
+//     const roomsNames = Object.keys(rooms)
+//     console.log('[WW]: Gamestate:')
+//     roomsNames.forEach(n => {
+//         console.log(`\t-- ${n}:`);
+//         console.log(`\t\t players: ${rooms[n].players.join(', ')}`)
+//         console.log(`\t\t turn: ${rooms[n].turn}`)
+//     })
+// });
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

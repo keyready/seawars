@@ -3,8 +3,12 @@ import { Button, cn, Divider, Input } from '@heroui/react';
 import { type FormEvent, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { GameboardActions, getCurrentPlayerName } from '@/entities/GameBoard';
-import { getGamingRooms, getLeaderboards } from '@/entities/GameBoard/model/selectors/getGameBoard';
+import {
+    GameboardActions,
+    getCurrentPlayerName,
+    getGamingRooms,
+    getLeaderboards,
+} from '@/entities/GameBoard';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { getGameSocket } from '@/shared/hooks/useGameSocket';
@@ -58,6 +62,14 @@ export const EnterRoomForm = () => {
         }
     }, []);
 
+    const handleCreateRoom = useCallback(
+        (ev: FormEvent<HTMLFormElement>) => {
+            ev.preventDefault();
+            socket?.emit('create-room', { name: currentName });
+        },
+        [currentName, socket],
+    );
+
     return (
         <div className="flex w-full flex-col items-center justify-center gap-5 px-4 py-8">
             <div
@@ -66,12 +78,12 @@ export const EnterRoomForm = () => {
                     'rounded-md bg-gradient-to-r from-cyan-800 to-blue-900 px-5 py-10',
                 )}
             >
-                <form className="flex w-full items-center justify-center gap-2">
+                <form
+                    onSubmit={handleCreateRoom}
+                    className="flex w-full items-center justify-center gap-2"
+                >
                     <Input label="Ваше имя" value={currentName} onValueChange={handleNameChange} />
-                    <Button
-                        color="success"
-                        onPress={() => socket?.emit('create-room', { name: currentName })}
-                    >
+                    <Button color="success" type="submit">
                         Создать комнату
                     </Button>
                 </form>
@@ -86,7 +98,6 @@ export const EnterRoomForm = () => {
                         value={selectedRoom}
                         onValueChange={handleChangeRoomId}
                     />
-                    <Input label="Ваше имя" value={currentName} onValueChange={handleNameChange} />
                     <Button type="submit">Присоединиться</Button>
                 </form>
                 <Divider className="my-2 h-0.5 w-full bg-gradient-to-r from-cyan-700 to-blue-700" />
@@ -152,7 +163,8 @@ export const EnterRoomForm = () => {
                                 })}
                             </h1>
                             <h1>
-                                20 - {lb.scores[lb.players.filter((p) => p === lb.winnerName)[0]]}
+                                {lb.scores[lb.players.filter((p) => p !== lb.winnerName)[0]]} -{' '}
+                                {lb.scores[lb.players.filter((p) => p === lb.winnerName)[0]]}
                             </h1>
                         </div>
                     ))}

@@ -1,4 +1,4 @@
-import type { Ship } from '../../../Ship/model/types/Ship';
+import type { Cell, Ship } from '@/entities/Ship';
 
 export type GameBoardType = 'owner' | 'enemy';
 
@@ -13,10 +13,6 @@ export enum CellState {
 export type Fleet = Ship[];
 export type BattlePhase = 'placing' | 'battle';
 export type CurrentPlayer = 'me' | 'enemy';
-export interface GameBoard {
-    grid: CellState[][];
-    fleet: Fleet;
-}
 
 export interface FleetPayload {
     target: 'ownerBoard' | 'enemyBoard';
@@ -42,11 +38,22 @@ export interface Leaderboard {
     scores: { [playerName: string]: number };
 }
 
+export interface GameboardCellsState {
+    hitCells: Cell[];
+    missCells: Cell[];
+}
+
+export interface GameBoard {
+    grid: GameboardCellsState;
+    fleet: Fleet;
+}
+
 export interface GameBoardSchema {
     ownerBoard: GameBoard;
-    enemyBoard: GameBoard;
+    enemyBoard: GameboardCellsState;
 
     name: string;
+    isPlayerReady: boolean;
 
     phase: BattlePhase;
     currentPlayer: CurrentPlayer;

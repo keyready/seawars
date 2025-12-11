@@ -1,92 +1,104 @@
-import { v4 as uuidv4 } from 'uuid';
+import { type Cell, ShipOrientation, type ShipSize } from '@/entities/Ship';
 
-import { type Ship, ShipOrientation, type ShipSize } from '@/entities/Ship/model/types/Ship';
+import type { Fleet } from '../types/GameBoard';
 
-export function generateRandomFleet() {
-    const SIZE = 10;
-    const shipCounts = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
-    const fleet: Ship[] = [];
+import { getShipCells, getShipForbiddenZone, isShipInBounds } from './utils';
 
-    const occupiedCells = new Set();
+const randInt = (min: number, max: number, rng = Math.random): number =>
+    Math.floor(rng() * (max - min + 1)) + min;
 
-    function canPlaceShip(r: number, c: number, orientation: ShipOrientation, len: number) {
-        const cells = [];
-        if (orientation === 'hor') {
-            if (c + len > SIZE) return false;
-            for (let i = 0; i < len; i++) {
-                cells.push({ r, c: c + i });
-            }
-        } else {
-            if (r + len > SIZE) return false;
-            for (let i = 0; i < len; i++) {
-                cells.push({ r: r + i, c });
-            }
-        }
+const canPlaceShip = (candidateCells: Cell[], placedShips: Fleet): boolean => {
+    if (!isShipInBounds(candidateCells)) return false;
 
-        for (const cell of cells) {
-            const key = `${cell.r},${cell.c}`;
-            if (occupiedCells.has(key)) return false;
-        }
+    const forbidden = new Set<string>();
+    placedShips.forEach((ship) => {
+        getShipForbiddenZone(ship.cells).forEach((c) => forbidden.add(`${c.r},${c.c}`));
+    });
 
-        for (const cell of cells) {
-            for (let dr = -1; dr <= 1; dr++) {
-                for (let dc = -1; dc <= 1; dc++) {
-                    const nr = cell.r + dr;
-                    const nc = cell.c + dc;
-                    if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
-                        const key = `${nr},${nc}`;
-                        if (occupiedCells.has(key)) return false;
+    return !candidateCells.some((c) => forbidden.has(`${c.r},${c.c}`));
+};
+
+export const generateRandomFleet = (seed?: number): Fleet => {
+    const rng =
+        seed != null
+            ? (() => {
+                  let state = seed;
+                  return () => {
+                      state = (state * 16807) % 2147483647;
+                      return (state - 1) / 2147483646;
+                  };
+              })()
+            : Math.random;
+
+    const shipSpecs: [number, number][] = [
+        [4, 1],
+        [3, 2],
+        [2, 3],
+        [1, 4],
+    ];
+
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    while (attempts < maxAttempts) {
+        attempts++;
+        const placedShips: Fleet = [];
+        let success = true;
+
+        for (const [size, count] of shipSpecs) {
+            for (let i = 0; i < count; i++) {
+                let placed = false;
+                let tries = 0;
+                const maxTries = 1000;
+
+                while (!placed && tries < maxTries) {
+                    tries++;
+
+                    const orientation: ShipOrientation =
+                        size === 1
+                            ? ShipOrientation.Horizontal
+                            : randInt(0, 1, rng)
+                              ? ShipOrientation.Horizontal
+                              : ShipOrientation.Vertical;
+
+                    const maxX = orientation === ShipOrientation.Horizontal ? 10 - size : 9;
+                    const maxY = orientation === ShipOrientation.Vertical ? 10 - size : 9;
+
+                    if (maxX < 0 || maxY < 0) continue;
+
+                    const head: Cell = {
+                        r: randInt(0, maxX, rng),
+                        c: randInt(0, maxY, rng),
+                    };
+
+                    const cells = getShipCells(head, size, orientation);
+
+                    if (canPlaceShip(cells, placedShips)) {
+                        placedShips.push({
+                            id: `ship-${size}-${i}-${attempts}`,
+                            size: size as ShipSize,
+                            orientation,
+                            head,
+                            cells,
+                            hitCells: [],
+                        });
+                        placed = true;
                     }
                 }
+
+                if (!placed) {
+                    success = false;
+                    break;
+                }
             }
+            if (!success) break;
         }
 
-        return true;
-    }
-
-    function placeShip(r: number, c: number, orientation: ShipOrientation, len: number) {
-        const cells = [];
-        if (orientation === 'hor') {
-            for (let i = 0; i < len; i++) {
-                cells.push({ r, c: c + i });
-            }
-        } else {
-            for (let i = 0; i < len; i++) {
-                cells.push({ r: r + i, c });
-            }
-        }
-
-        for (const cell of cells) {
-            occupiedCells.add(`${cell.r},${cell.c}`);
+        if (success && placedShips.length === 10) {
+            return placedShips;
         }
     }
 
-    function generateShip(len: number) {
-        const attempts = 5000; // больше попыток — безопаснее
-        for (let i = 0; i < attempts; i++) {
-            const r = Math.floor(Math.random() * SIZE);
-            const c = Math.floor(Math.random() * SIZE);
-            const orientation =
-                Math.random() < 0.5 ? ShipOrientation.Horizontal : ShipOrientation.Vertical;
-
-            if (canPlaceShip(r, c, orientation, len)) {
-                placeShip(r, c, orientation, len);
-                return { orientation, head: { r, c }, size: len as ShipSize };
-            }
-        }
-        throw new Error(`Не удалось разместить ${len}-палубный корабль за ${attempts} попыток`);
-    }
-
-    [...shipCounts]
-        .sort((a, b) => b - a)
-        .forEach((len) => {
-            const ship: Ship = {
-                ...generateShip(len),
-                id: uuidv4(),
-                hitCells: [],
-            };
-            fleet.push(ship);
-        });
-
-    return fleet;
-}
+    console.error('Не удалось сгенерировать флот за', maxAttempts, 'попыток');
+    return [];
+};
