@@ -1,7 +1,8 @@
 import { addToast, Button, cn, Divider, Input } from '@heroui/react';
 
-import { type FormEvent, useCallback, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
 
 import {
     GameboardActions,
@@ -17,12 +18,25 @@ import { useSocket } from '@/store/SocketContext';
 export const EnterRoomForm = () => {
     const dispatch = useAppDispatch();
     const socket = useSocket();
+    const navigate = useNavigate();
 
     const currentName = useSelector(getCurrentPlayerName);
     const gamingRooms = useSelector(getGamingRooms);
     const leaderboard = useSelector(getLeaderboards);
 
     const [selectedRoom, setSelectedRoom] = useState<string>('');
+
+    useEffect(() => {
+        const handleJoinRoom = ({ roomId }: { roomId: string }) => {
+            navigate(roomId);
+        };
+
+        socket?.on('joined-room', handleJoinRoom);
+
+        return () => {
+            socket?.on('joined-room', handleJoinRoom);
+        };
+    }, [navigate, socket]);
 
     const handleChangeRoomId = useCallback((val: string) => {
         setSelectedRoom(val);
@@ -33,15 +47,6 @@ export const EnterRoomForm = () => {
             dispatch(GameboardActions.setName(val));
         },
         [dispatch],
-    );
-
-    const handleJoinRoom = useCallback(
-        (ev: FormEvent<HTMLFormElement>) => {
-            ev.preventDefault();
-            dispatch(GameboardActions.setGameRoom(selectedRoom));
-            socket?.emit('join-room', { roomId: selectedRoom, name: currentName });
-        },
-        [currentName, dispatch, selectedRoom, socket],
     );
 
     const handleCopyRoomId = useCallback((id: string) => {
@@ -65,10 +70,17 @@ export const EnterRoomForm = () => {
     const handleCreateRoom = useCallback(
         (ev: FormEvent<HTMLFormElement>) => {
             ev.preventDefault();
-            console.log(socket);
             socket?.emit('create-room', { name: currentName });
         },
         [currentName, socket],
+    );
+
+    const handleJoinRoom = useCallback(
+        (ev: FormEvent<HTMLFormElement>) => {
+            ev.preventDefault();
+            socket?.emit('join-room', { roomId: selectedRoom, name: currentName });
+        },
+        [currentName, selectedRoom, socket],
     );
 
     return (
@@ -183,7 +195,7 @@ export const EnterRoomForm = () => {
                                 <h1 className="col-span-3 truncate text-start">
                                     {lb.players.join(' vs. ')}
                                 </h1>
-                                <h1 className="col-span-2 text-start font-bold text-yellow-500">
+                                <h1 className="col-span-2 truncate text-start font-bold text-yellow-500">
                                     {lb.winnerName}
                                 </h1>
                                 <h1 className="col-span-4 truncate text-start">

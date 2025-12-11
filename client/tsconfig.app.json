@@ -13,6 +13,7 @@
       "@/entities/*": ["./src/entities/*"],
       "@/shared/*": ["./src/shared/*"],
       "@/store/*": ["./src/store/*"],
+      "@/app/*": ["./src/app/*"],
       "@/widgets/*": ["./src/Widgets/*"],
     },
     /* Bundler mode */

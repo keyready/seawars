@@ -58,7 +58,6 @@ io.on('connection', async (socket) => {
             socket.emit('error', {message: 'Failed to create room'});
         }
     });
-
     socket.on('join-room', async ({roomId, name}) => {
         try {
             const room = await Room.findOne({id: roomId});
@@ -71,7 +70,7 @@ io.on('connection', async (socket) => {
 
             socket.join(roomId);
             socket.emit('joined-room', {roomId, player: name});
-            socket.to(roomId).emit('player-joined', { player: name });
+            socket.to(roomId).emit('player-joined', {player: name});
 
             io.emit('existing-rooms', {
                 rooms: await Room.find({}).select('id players').lean(),
@@ -81,6 +80,34 @@ io.on('connection', async (socket) => {
             socket.emit('error', {message: 'Failed to join room'});
         }
     });
+    socket.on('get-room-info', async ({roomId, name}) => {
+        try {
+            const room = await Room.findOne({id: roomId})
+            if (!room) return socket.emit('error', {message: 'Room not found'})
+
+            console.log(room.players, name)
+            if (!room.players.includes(name)) {
+                return socket.emit('error', {message: 'It\'s not your room'})
+            }
+
+            if (room.fleets[name]?.ships && room.fleets[name].ships.length) {
+                const response = {
+                    fleet: room.fleets[name].ships,
+                    cells: {
+                        // ownerMissCells: '',
+                        ownerHitCells: room.fleets[name].ships.map(ship => ship.hitCells).flat(),
+                        // enemyMissCells: '',
+                        // enemyHitCells: '',
+                    }
+                }
+                socket.emit('load-game-state', response)
+            }
+
+        } catch (e) {
+            console.log(e)
+            return socket.emit('error', {message: JSON.stringify(e)})
+        }
+    })
 
     socket.on('submit-fleet', async ({fleet, player, roomId}) => {
             try {
@@ -90,6 +117,7 @@ io.on('connection', async (socket) => {
                 if (Object.hasOwn(room.fleets, player)) return socket.emit('error', {message: 'Fleet already submitted'});
 
                 const ships = fleet.filter(Boolean).map(ship => ({
+                    id: ship.id,
                     head: ship.head,
                     size: ship.size,
                     orientation: ship.orientation,
@@ -97,18 +125,11 @@ io.on('connection', async (socket) => {
                     cells: ship.cells,
                 }));
 
-                await Room.updateOne({id: roomId}, {
-                    fleets: {
-                        ...room.fleets,
-                        [player]: {
-                            ships: ships,
-                            ready: true
-                        }
-                    }
-                })
+                room.fleets[player] = {
+                    ships,
+                    ready: true
+                };
                 console.log(`⚓ \t${player} submitted fleet`);
-
-                room = await Room.findOne({id: roomId});
 
                 const fleetsReady = room.players.length === 2 &&
                     room.players.every(p => Object.hasOwn(room.fleets, p) && room.fleets[p]?.ready);
@@ -116,23 +137,19 @@ io.on('connection', async (socket) => {
                 if (fleetsReady) {
                     room.started = true;
                     room.turn = room.players[0];
-                    await Room.updateOne({id: roomId}, {
-                        started: true,
-                        turn: room.players[0]
-                    })
 
                     console.log(`▶️ \tGame started in room #${roomId}, turn ${room.turn}`);
                     io.in(roomId).emit('game-start', {turn: room.turn});
                 }
+
+                room.markModified('fleets')
+                await room.save()
             } catch
                 (err) {
                 console.error('Error submitting fleet:', err);
                 socket.emit('error', {message: 'Failed to submit fleet'});
             }
-        }
-    )
-    ;
-
+        });
     socket.on('fire', async ({pos, player, roomId}) => {
         try {
             const room = await Room.findOne({id: roomId});
@@ -150,7 +167,7 @@ io.on('connection', async (socket) => {
             }
 
             const opponentFleet = room.fleets[opponent].ships;
-            const { foundShip, hitCell } = findShipAtCell(opponentFleet, pos);
+            const {foundShip, hitCell} = findShipAtCell(opponentFleet, pos);
 
             console.log(foundShip, hitCell)
 
@@ -226,6 +243,8 @@ io.on('connection', async (socket) => {
             socket.emit('fire-response', {pos, result, turn: room.turn});
             socket.to(roomId).emit('incoming-fire', {target: opponent, pos, result});
 
+            console.log('hit result', result)
+
             if (!gameEnded) {
                 io.in(roomId).emit('turn-changed', {turn: room.turn});
             }
@@ -240,13 +259,12 @@ io.on('connection', async (socket) => {
             socket.emit('error', {message: 'Failed to process fire'});
         }
     });
-
     socket.on('disconnect', async () => {
         console.log(`❌ \tClient disconnected: ${socket.id}`);
-        const playerRoom = await Room.findOne({ playersUUID: socket.id })
+        const playerRoom = await Room.findOne({playersUUID: socket.id})
         if (playerRoom && playerRoom?.id) {
             const leavedPlayerName = playerRoom.players[playerRoom.playersUUID.findIndex(id => id === socket.id)]
-            socket.in(playerRoom.id).emit('leave-room', { player:  leavedPlayerName})
+            socket.in(playerRoom.id).emit('leave-room', {player: leavedPlayerName})
             playerRoom.playersUUID.filter(p => p === socket.id)
             playerRoom.players.filter(p => p === leavedPlayerName)
             playerRoom.save()

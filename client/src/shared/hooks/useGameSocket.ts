@@ -2,6 +2,7 @@ import { addToast } from '@heroui/react';
 
 import { useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
 
 import {
     CellState,
@@ -33,6 +34,7 @@ let globalSocketSubscribed = false;
 export const useGameActions = () => {
     const dispatch = useAppDispatch();
     const socket = useSocket();
+    const navigate = useNavigate();
 
     const ownerGameboard = useSelector(getOwnerGameboard);
     const ownerFleet = useSelector(getOwnerFleet);
@@ -75,7 +77,6 @@ export const useGameActions = () => {
                 );
             }
         };
-
         const handleIncomingFire = ({ pos, result }: FireResult) => {
             console.log(`[SOCKET] Incoming Fire:`, { pos, result });
 
@@ -102,26 +103,21 @@ export const useGameActions = () => {
                 );
             }
         };
-
         const handleTurnChanged = ({ turn }: { turn: CurrentPlayer }) => {
             console.log(`[SOCKET] Turn changed:`, turn);
             dispatch(GameboardActions.setCurrentTurn(turn === currentName ? 'me' : 'enemy'));
             dispatch(GameboardActions.setPhase('battle'));
         };
-
         const handleGameStart = ({ turn }: { turn: CurrentPlayer }) => {
             dispatch(GameboardActions.setCurrentTurn(turn === currentName ? 'me' : 'enemy'));
             dispatch(GameboardActions.setPhase('battle'));
             addToast({ color: 'secondary', title: 'Игра началась!' });
         };
-
         const handleGameOver = ({ winner }: { winner: string }) => {
+            navigate('/');
+            addToast({ color: 'warning', title: `Победитель - ${winner}` });
             dispatch(GameboardActions.reset());
-            if (currentRoom) {
-                addToast({ color: 'warning', title: `Победитель - ${winner}` });
-            }
         };
-
         const handleEndGame = () => {
             console.warn('Кто-то из игроков отключился, комната будет удалена');
             dispatch(GameboardActions.reset());
@@ -130,7 +126,6 @@ export const useGameActions = () => {
         const handlePlayerJoined = ({ player }: { player: string }) => {
             addToast({ color: 'warning', title: `В комнату зашел ${player}` });
         };
-
         const handlePlayerLeave = ({ player }: { player: string }) => {
             addToast({ color: 'danger', title: `${player} покинул игру` });
         };
