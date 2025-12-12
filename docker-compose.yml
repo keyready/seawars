@@ -16,5 +16,13 @@ services:
     depends_on:
       - mongo
 
+  client-builder:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: seawars-client-builder
+    volumes:
+      - ./client-files:/client/dist
+
 volumes:
   mongo-data:

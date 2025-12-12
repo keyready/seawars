@@ -11,6 +11,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const s = io('http://localhost:5000', {
+            path: '/socket',
             reconnection: true,
         });
         setSocket(s);

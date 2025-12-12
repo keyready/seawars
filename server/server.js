@@ -9,6 +9,7 @@ const {Gamelogs, Room} = require('./models/index')
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
+    path: '/socket',
     cors: {origin: '*'},
 });
 
@@ -275,7 +276,7 @@ io.on('connection', async (socket) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
-    await mongoose.connect('mongodb://127.0.0.1:27017/seawar');
+    await mongoose.connect('mongodb://mongo:27017/seawar');
 
     console.log(`🚀 \tSea Battle Server (static room) running on http://localhost:${PORT}`);
 });
