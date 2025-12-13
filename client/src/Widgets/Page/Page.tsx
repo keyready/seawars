@@ -11,7 +11,7 @@ export const Page = ({ children }: PageProps) => {
         <section
             className={cn(
                 'h-screen w-full bg-slate-900 font-sans text-white selection:bg-cyan-500 selection:text-white',
-                'flex flex-col items-center justify-center gap-10',
+                'flex flex-col items-center justify-start gap-10 overflow-y-auto p-16 px-4',
             )}
         >
             {children}

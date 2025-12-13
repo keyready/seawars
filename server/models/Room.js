@@ -12,6 +12,10 @@ const RoomSchema = new Schema({
     players: [String],
     playersUUID: [String],
     createdAt: Date,
+    lastActivity: {
+        type: Date,
+        default: Date.now
+    },
 });
 
 const Room = mongoose.model('Room', RoomSchema);

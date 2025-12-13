@@ -1,71 +1,51 @@
-import { addToast, cn } from '@heroui/react';
+import {
+    Button,
+    ButtonGroup,
+    cn,
+    Modal,
+    ModalBody,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+} from '@heroui/react';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, useNavigate, useParams } from 'react-router';
+import { Navigate, useBlocker, useParams } from 'react-router';
 
 import { Page } from '@/widgets/Page';
 
-import { DroppableShipBoard, GameboardActions, getCurrentPlayerName } from '@/entities/GameBoard';
-import type { Fleet } from '@/entities/GameBoard/model/types/GameBoard';
-import type { Cell } from '@/entities/Ship';
+import { DroppableShipBoard, getCurrentPlayerName } from '@/entities/GameBoard';
 
-import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
-
-import { useSocket } from '@/store/SocketContext';
-
-let isRoomPageSocketEnabled = false;
-
-interface LoadGameStateResponse {
-    fleet: Fleet;
-    cells: {
-        ownerHitCells: Cell[];
-        ownerMissCells: Cell[];
-        enemyHitCells: Cell[];
-        enemyMissCells: Cell[];
-    };
-}
+import { useGameActions } from '@/shared/hooks/useGameSocket';
 
 export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
+    const { getRoomInfo, handlePlayerLeaveRoom } = useGameActions();
 
-    const socket = useSocket();
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
+    const [isLeaveModalEnabled, setIsLeaveModalEnabled] = useState<boolean>(false);
 
     const name = useSelector(getCurrentPlayerName);
+    const blocker = useBlocker(true);
 
     useEffect(() => {
-        if (isRoomPageSocketEnabled) return;
-        isRoomPageSocketEnabled = true;
+        if (blocker.state === 'blocked') {
+            setIsLeaveModalEnabled(true);
+        } else {
+            setIsLeaveModalEnabled(false);
+        }
+    }, [blocker]);
 
-        dispatch(GameboardActions.setGameRoom(roomId!));
-        socket?.emit('get-room-info', { roomId, name });
+    useEffect(() => {
+        if (roomId && name) {
+            getRoomInfo(roomId, name);
+        }
+    }, [roomId, name, getRoomInfo]);
 
-        console.log('init');
-
-        const handleError = ({ message }: { message: string }) => {
-            addToast({ title: message, color: 'danger' });
-        };
-
-        const handleLoadFleet = ({ fleet, cells }: LoadGameStateResponse) => {
-            dispatch(GameboardActions.setOwnerFleet(fleet));
-
-            // cells.ownerMissCells.map((c) => dispatch(GameboardActions.setOwnerMissCells(c)));
-            cells.ownerHitCells.map((c) => dispatch(GameboardActions.setOwnerHitCells(c)));
-            // cells.enemyMissCells.map((c) => dispatch(GameboardActions.setEnemyMissCells(c)));
-            // cells.enemyHitCells.map((c) => dispatch(GameboardActions.setEnemyHitCells(c)));
-        };
-
-        socket?.on('error', handleError);
-        socket?.on('load-game-state', handleLoadFleet);
-
-        return () => {
-            socket?.off('error', handleError);
-            socket?.off('load-game-state', handleLoadFleet);
-            isRoomPageSocketEnabled = false;
-        };
-    }, [dispatch, name, navigate, roomId, socket]);
+    const handleLeaveRoom = useCallback(() => {
+        handlePlayerLeaveRoom();
+        blocker.proceed?.();
+    }, [blocker, handlePlayerLeaveRoom]);
 
     if (!roomId) return <Navigate to="/" />;
 
@@ -82,7 +62,7 @@ export default function RoomPage() {
                 </h1>
             </header>
 
-            <div className="flex items-start justify-center gap-8 md:flex-row">
+            <div className="flex flex-col items-start justify-center gap-8 md:flex-row">
                 <div className="flex flex-col items-center justify-center gap-6 text-center">
                     <h2 className="mb-2 text-lg font-semibold">Ваш флот</h2>
                     <DroppableShipBoard type="own" />
@@ -93,6 +73,31 @@ export default function RoomPage() {
                     <DroppableShipBoard type="enemy" />
                 </div>
             </div>
+
+            <Modal backdrop="blur" isOpen={isLeaveModalEnabled} size="3xl">
+                <ModalContent className="text-white">
+                    <ModalHeader className="text-danger">Просто сбежите?</ModalHeader>
+                    <ModalBody>
+                        <h1 className="text-lg">Вы собираетесь покинуть поле боя!</h1>
+                        <h2 className="text-sm">Как потом смотреть в глаза однополчанам???</h2>
+                    </ModalBody>
+                    <ModalFooter>
+                        <div className="flex items-center gap-3">
+                            <ButtonGroup size="sm">
+                                <Button onPress={handleLeaveRoom} color="danger">
+                                    Сбежать!
+                                </Button>
+                                <Button onPress={handleLeaveRoom} color="danger">
+                                    Ретироваться
+                                </Button>
+                                <Button onPress={blocker.reset} color="success">
+                                    Драться, как лев
+                                </Button>
+                            </ButtonGroup>
+                        </div>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Page>
     );
 }

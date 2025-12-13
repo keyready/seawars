@@ -28,7 +28,11 @@ createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <SocketProvider>
             <HeroUIProvider>
-                <ToastProvider placement="top-left" toastOffset={20} />
+                <ToastProvider
+                    toastProps={{ timeout: 1500 }}
+                    placement="top-left"
+                    toastOffset={20}
+                />
                 <StoreProvider>
                     <RouterProvider router={router} />
                 </StoreProvider>

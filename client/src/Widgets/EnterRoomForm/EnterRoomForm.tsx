@@ -1,8 +1,7 @@
 import { addToast, Button, cn, Divider, Input } from '@heroui/react';
 
-import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router';
 
 import {
     GameboardActions,
@@ -12,31 +11,17 @@ import {
 } from '@/entities/GameBoard';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
-
-import { useSocket } from '@/store/SocketContext';
+import { useGameActions } from '@/shared/hooks/useGameSocket';
 
 export const EnterRoomForm = () => {
     const dispatch = useAppDispatch();
-    const socket = useSocket();
-    const navigate = useNavigate();
+    const { createRoom, joinRoom } = useGameActions();
 
     const currentName = useSelector(getCurrentPlayerName);
     const gamingRooms = useSelector(getGamingRooms);
     const leaderboard = useSelector(getLeaderboards);
 
     const [selectedRoom, setSelectedRoom] = useState<string>('');
-
-    useEffect(() => {
-        const handleJoinRoom = ({ roomId }: { roomId: string }) => {
-            navigate(roomId);
-        };
-
-        socket?.on('joined-room', handleJoinRoom);
-
-        return () => {
-            socket?.on('joined-room', handleJoinRoom);
-        };
-    }, [navigate, socket]);
 
     const handleChangeRoomId = useCallback((val: string) => {
         setSelectedRoom(val);
@@ -70,17 +55,17 @@ export const EnterRoomForm = () => {
     const handleCreateRoom = useCallback(
         (ev: FormEvent<HTMLFormElement>) => {
             ev.preventDefault();
-            socket?.emit('create-room', { name: currentName });
+            createRoom(currentName);
         },
-        [currentName, socket],
+        [currentName, createRoom],
     );
 
     const handleJoinRoom = useCallback(
         (ev: FormEvent<HTMLFormElement>) => {
             ev.preventDefault();
-            socket?.emit('join-room', { roomId: selectedRoom, name: currentName });
+            joinRoom(selectedRoom, currentName);
         },
-        [currentName, selectedRoom, socket],
+        [currentName, selectedRoom, joinRoom],
     );
 
     return (
