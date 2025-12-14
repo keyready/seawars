@@ -91,9 +91,7 @@ const setupGameHandlers = (io, socket) => {
             }
 
             // Обновим existing-rooms
-            io.emit('existing-rooms', {
-                rooms: await Room.find({}).select('id players').lean(),
-            });
+            io.emit('existing-rooms', await Room.find({}).select('id players').lean());
         } catch (err) {
             console.error('Error during fire:', err);
             socket.emit('error', { message: err.message || 'Failed to process fire' });

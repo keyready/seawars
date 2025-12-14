@@ -1,9 +1,9 @@
+import type { Room } from '@/entities/Room';
 import type { Cell, Ship } from '@/entities/Ship';
 
 export type GameBoardType = 'owner' | 'enemy';
 
 export enum CellState {
-    Empty = 'empty',
     Ship = 'ship',
     Miss = 'miss',
     Hit = 'hit',
@@ -13,30 +13,6 @@ export enum CellState {
 export type Fleet = Ship[];
 export type BattlePhase = 'placing' | 'battle';
 export type CurrentPlayer = 'me' | 'enemy';
-
-export interface FleetPayload {
-    target: 'ownerBoard' | 'enemyBoard';
-    fleet: Fleet;
-}
-
-export interface GameboardPayload {
-    target: 'ownerBoard' | 'enemyBoard';
-    board: CellState[][];
-}
-
-export interface Room {
-    id: string;
-    players: string[];
-}
-
-export interface Leaderboard {
-    id: string;
-    players: string[];
-    winnerName: string;
-    createdAt: Date;
-    endedAt: Date;
-    scores: { [playerName: string]: number };
-}
 
 export interface GameboardCellsState {
     hitCells: Cell[];
@@ -60,5 +36,4 @@ export interface GameBoardSchema {
     room: string | undefined;
 
     existingRooms?: Room[];
-    leaderboard?: Leaderboard[];
 }

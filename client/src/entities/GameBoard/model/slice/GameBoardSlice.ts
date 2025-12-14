@@ -11,8 +11,6 @@ import {
     type CurrentPlayer,
     type Fleet,
     type GameBoardSchema,
-    type Leaderboard,
-    type Room,
 } from '../types/GameBoard';
 
 const initialOwnerFleet: Fleet = generateShips()
@@ -46,7 +44,6 @@ const initialState: GameBoardSchema = {
 
     room: undefined,
     existingRooms: undefined,
-    leaderboard: undefined,
 };
 
 const GameStateSlice = createSlice({
@@ -100,12 +97,6 @@ const GameStateSlice = createSlice({
         },
         setGameRoom: (state, action: PayloadAction<string>) => {
             state.room = action.payload;
-        },
-        setRooms: (state, action: PayloadAction<Room[]>) => {
-            state.existingRooms = action.payload;
-        },
-        setLeaderBoard: (state, action: PayloadAction<Leaderboard[]>) => {
-            state.leaderboard = action.payload;
         },
         reset: (state) => {
             state.ownerBoard = {

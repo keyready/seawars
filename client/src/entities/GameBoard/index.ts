@@ -1,10 +1,4 @@
-export type {
-    GameBoardSchema,
-    GameBoard,
-    GameBoardType,
-    Leaderboard,
-    Room,
-} from './model/types/GameBoard';
+export type { GameBoardSchema, GameBoard, GameBoardType, Fleet } from './model/types/GameBoard';
 export { CellState } from './model/types/GameBoard';
 export { GameboardActions, GameboardReducer } from './model/slice/GameBoardSlice';
 
@@ -24,7 +18,6 @@ export {
     getGameRoom,
     getGamePhase,
     getGamingRooms,
-    getLeaderboards,
 } from './model/selectors/getGameBoard';
 
 export type { BattlePhase } from './model/types/GameBoard';

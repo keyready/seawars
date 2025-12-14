@@ -7,19 +7,25 @@ import { createBrowserRouter } from 'react-router';
 
 import { App } from '@/app/App';
 
+import MainPage from '@/pages/MainPage';
+import RoomPage from '@/pages/RoomPage';
+
 import { SocketProvider } from '@/store/SocketContext';
 import { StoreProvider } from '@/store/StoreProvider';
 
 import './app/index.css';
-import RoomPage from './pages/RoomPage';
 
 const router = createBrowserRouter([
     {
         path: '/',
+        element: <MainPage />,
+    },
+    {
+        path: '/battle',
         element: <App />,
     },
     {
-        path: ':roomId',
+        path: '/battle/:roomId',
         element: <RoomPage />,
     },
 ]);

@@ -23,7 +23,6 @@ export function createReducerManager(
             if (keysToRemove.length > 0) {
                 state = { ...state };
                 keysToRemove.forEach((key) => {
-                    // @ts-expect-error expect-error
                     delete state[key];
                 });
                 keysToRemove = [];
@@ -44,7 +43,6 @@ export function createReducerManager(
             if (!key || !reducers[key]) {
                 return;
             }
-            // @ts-expect-error huiiii
             delete reducers[key];
             keysToRemove.push(key);
             mountedReducers[key] = false;

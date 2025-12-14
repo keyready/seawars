@@ -3,12 +3,7 @@ import { addToast, Button, cn, Divider, Input } from '@heroui/react';
 import { type FormEvent, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import {
-    GameboardActions,
-    getCurrentPlayerName,
-    getGamingRooms,
-    getLeaderboards,
-} from '@/entities/GameBoard';
+import { GameboardActions, getCurrentPlayerName, getGamingRooms } from '@/entities/GameBoard';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useGameActions } from '@/shared/hooks/useGameSocket';
@@ -19,7 +14,6 @@ export const EnterRoomForm = () => {
 
     const currentName = useSelector(getCurrentPlayerName);
     const gamingRooms = useSelector(getGamingRooms);
-    const leaderboard = useSelector(getLeaderboards);
 
     const [selectedRoom, setSelectedRoom] = useState<string>('');
 
@@ -143,72 +137,6 @@ export const EnterRoomForm = () => {
                     )}
                 </div>
             </div>
-
-            {leaderboard?.length && (
-                <div
-                    className={cn(
-                        'flex h-1/2 w-4/5 flex-col items-center justify-center gap-2 lg:w-3/5 xl:w-1/2',
-                        'rounded-md bg-gradient-to-r from-cyan-800 to-blue-900 px-5 py-6',
-                    )}
-                >
-                    <h1 className="w-full text-start text-2xl">Прошедшие игры</h1>
-                    <div className="w-full">
-                        <div
-                            className={cn(
-                                'grid w-full grid-cols-12 items-center justify-start',
-                                'gap-10 rounded-md px-3 py-1',
-                            )}
-                        >
-                            <h1 className="col-span-3 truncate text-start font-bold">Кто играл</h1>
-                            <h1 className="col-span-2 text-start font-bold">Победитель</h1>
-                            <h1 className="col-span-4 truncate text-start font-bold">
-                                Дата и время проведения
-                            </h1>
-                            <h1 className="col-span-3 truncate text-start font-bold">Счет игры</h1>
-                        </div>
-                        <Divider className="bg-gradient-to-r from-cyan-500 to-blue-600" />
-                    </div>
-                    <div className="max-h-[150px] w-full overflow-y-auto">
-                        {leaderboard.map((lb) => (
-                            <div
-                                key={lb.id}
-                                className={cn(
-                                    'grid w-full grid-cols-12 items-center justify-start',
-                                    'gap-10 rounded-md px-3 py-1',
-                                )}
-                            >
-                                <h1 className="col-span-3 truncate text-start">
-                                    {lb.players.join(' vs. ')}
-                                </h1>
-                                <h1 className="col-span-2 truncate text-start font-bold text-yellow-500">
-                                    {lb.winnerName}
-                                </h1>
-                                <h1 className="col-span-4 truncate text-start">
-                                    {new Date(lb.createdAt).toLocaleString('ru-RU', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                    })}{' '}
-                                    -{' '}
-                                    {new Date(lb.endedAt).toLocaleString('ru-RU', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                    })}
-                                    {', '}
-                                    {new Date(lb.endedAt).toLocaleString('ru-RU', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                    })}
-                                </h1>
-                                <h1 className="col-span-3 truncate text-start">
-                                    {lb.scores[lb.players.filter((p) => p !== lb.winnerName)[0]]} -{' '}
-                                    {lb.scores[lb.players.filter((p) => p === lb.winnerName)[0]]}
-                                </h1>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

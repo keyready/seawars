@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
 
-import type { Leaderboard, Room } from '@/entities/GameBoard';
+import type { Fleet } from '@/entities/GameBoard';
 import {
     CellState,
     type CurrentPlayer,
@@ -16,7 +16,8 @@ import {
     getOwnerGameboard,
     getSkirtAroundDestroyedShip,
 } from '@/entities/GameBoard';
-import type { Fleet } from '@/entities/GameBoard/model/types/GameBoard';
+import { type Leaderboard, LeaderboardActions } from '@/entities/Leaderboard';
+import { type Room, RoomActions } from '@/entities/Room';
 import type { Cell } from '@/entities/Ship';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
@@ -41,7 +42,6 @@ interface LoadGameStateResponse {
     };
 }
 
-// Глобальный флаг для отслеживания регистрации обработчиков
 let isHandlersRegistered = false;
 
 export const useGameActions = () => {
@@ -74,6 +74,83 @@ export const useGameActions = () => {
             currentRoom,
         };
     }, [dispatch, navigate, ownerGameboard, enemyGameboard, currentName, currentRoom]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        let attemptCount = 0;
+        const maxAttempts = 3;
+        const intervalMs = 5000;
+        let timeoutId: number | null = null;
+        let hasShownError = false;
+
+        const checkConnection = () => {
+            if (socket.connected) {
+                attemptCount = 0;
+                hasShownError = false;
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                return;
+            }
+
+            attemptCount++;
+            console.log(`[SOCKET] Проверка соединения ${attemptCount}/${maxAttempts}`);
+
+            if (attemptCount >= maxAttempts && !hasShownError) {
+                hasShownError = true;
+                addToast({
+                    color: 'danger',
+                    title: 'Сервер недоступен',
+                    description:
+                        'Не удалось установить соединение с сервером. Пожалуйста, обратитесь к фиксикам.',
+                    timeout: 3000,
+                });
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                return;
+            }
+
+            if (attemptCount < maxAttempts) {
+                timeoutId = setTimeout(() => {
+                    checkConnection();
+                }, intervalMs);
+            }
+        };
+
+        if (!socket.connected) {
+            checkConnection();
+        }
+
+        const handleConnect = () => {
+            attemptCount = 0;
+            hasShownError = false;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+        };
+
+        const handleDisconnect = () => {
+            attemptCount = 0;
+            hasShownError = false;
+            checkConnection();
+        };
+
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+        };
+    }, [socket]);
 
     useEffect(() => {
         if (!socket || isHandlersRegistered) return;
@@ -175,42 +252,40 @@ export const useGameActions = () => {
             addToast({ color: 'danger', title: `${player} покинул игру` });
         };
 
-        // Обработчики для App.tsx
         const handleRoomCreated = ({ roomId }: { roomId: string }) => {
             const state = stateRef.current;
             state.navigate(roomId);
             state.dispatch(GameboardActions.setGameRoom(roomId));
         };
 
-        const handleGetRooms = ({ rooms }: { rooms: Room[] }) => {
+        const handleGetRooms = (rooms: Room[]) => {
             const state = stateRef.current;
-            state.dispatch(GameboardActions.setRooms(rooms));
+            console.log('Получил комнаты', rooms);
+            state.dispatch(RoomActions.setRooms(rooms));
         };
 
-        const handleGetLeaderboard = ({ games }: { games: Leaderboard[] }) => {
+        const handleGetLeaderboard = (games: Leaderboard[]) => {
             const state = stateRef.current;
-            state.dispatch(GameboardActions.setLeaderBoard(games));
+            state.dispatch(LeaderboardActions.setLeaderBoard(games));
         };
 
-        // Обработчик для EnterRoomForm
         const handleJoinedRoom = ({ roomId }: { roomId: string }) => {
-            const state = stateRef.current;
-            state.navigate(roomId);
+            // const state = stateRef.current;
+            // state.navigate(roomId);
+            console.log(roomId);
         };
 
-        // Обработчик для RoomPage
         const handleLoadGameState = ({ fleet, cells }: LoadGameStateResponse) => {
             const state = stateRef.current;
             state.dispatch(GameboardActions.setOwnerFleet(fleet));
             cells.ownerHitCells.map((c) => state.dispatch(GameboardActions.setOwnerHitCells(c)));
         };
 
-        // Общий обработчик ошибок
         const handleError = ({ message }: { message: string }) => {
             addToast({ title: message, color: 'danger' });
         };
         const handleSystemMessage = ({ message }: { message: string }) => {
-            addToast({ title: message, color: 'secondary' });
+            addToast({ title: message, color: 'secondary', timeout: 2000 });
         };
 
         const handlePlayerSubmitFleet = ({ player }: { player: string }) => {

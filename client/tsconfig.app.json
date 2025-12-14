@@ -13,6 +13,7 @@
       "@/entities/*": ["./src/entities/*"],
       "@/shared/*": ["./src/shared/*"],
       "@/store/*": ["./src/store/*"],
+      "@/pages/*": ["./src/pages/*"],
       "@/app/*": ["./src/app/*"],
       "@/widgets/*": ["./src/Widgets/*"],
     },

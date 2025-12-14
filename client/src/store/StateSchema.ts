@@ -3,9 +3,15 @@ import type { EnhancedStore, Reducer, ReducersMapObject, UnknownAction } from '@
 import type { AxiosInstance } from 'axios';
 
 import type { GameBoardSchema } from '@/entities/GameBoard';
+import type { LeaderboardSchema } from '@/entities/Leaderboard';
+import type { RoomSchema } from '@/entities/Room';
+import type { UserSchema } from '@/entities/User';
 
 export interface StateSchema {
+    user: UserSchema;
     board: GameBoardSchema;
+    leaderboard: LeaderboardSchema;
+    rooms: RoomSchema;
 
     // asynchronous reducers
 }

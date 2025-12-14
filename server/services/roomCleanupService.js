@@ -15,9 +15,7 @@ const setupRoomCleanup = (io) => {
                     lastActivity: { $lt: twoMinutesAgo }
                 });
 
-                io.emit('existing-rooms', {
-                    rooms: await Room.find({}).select('id players').lean(),
-                });
+                io.emit('existing-rooms', await Room.find({}).select('id players').lean());
                 io.emit('system', {
                     message: `Удаление ${inactiveRooms?.length} неактивных комнат (неактивны более 2 минут)`,
                 });

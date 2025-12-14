@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { Gamelogs, Room } = require('../models');
 
 const getUserProfile = async (req, res) => {
     try {
@@ -39,6 +40,26 @@ const getLeaderboard = async (req, res) => {
     } catch (error) {
         console.error('Ошибка получения таблицы лидеров:', error);
         res.status(500).json({ error: 'Ошибка при получении таблицы лидеров' });
+    }
+};
+
+const getGames = async (req, res) => {
+    try {
+        const games = await Gamelogs.find({}).lean();
+        res.json(games);
+    } catch (error) {
+        console.error('Ошибка получения игр:', error);
+        res.status(500).json({ error: 'Ошибка при получении игр' });
+    }
+};
+
+const getRooms = async (req, res) => {
+    try {
+        const rooms = await Room.find({}).select('id players').lean();
+        res.json(rooms);
+    } catch (error) {
+        console.error('Ошибка получения комнат:', error);
+        res.status(500).json({ error: 'Ошибка при получении комнат' });
     }
 };
 
@@ -83,6 +104,8 @@ const updateProfile = async (req, res) => {
 module.exports = {
     getUserProfile,
     getLeaderboard,
+    getGames,
+    getRooms,
     updateProfile,
 };
 

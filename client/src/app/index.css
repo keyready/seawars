@@ -8,6 +8,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+    font-family: 'CSGOFont';
+    src: url('/fonts/cs_regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
 body {
     width: 100vw;
     height: 100vh;

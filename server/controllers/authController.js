@@ -3,10 +3,9 @@ const { generateToken } = require('../utils/jwt');
 
 const register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, password } = req.body;
 
-        // Валидация
-        if (!username || !email || !password) {
+        if (!username || !password) {
             return res.status(400).json({ error: 'Все поля обязательны' });
         }
 
@@ -14,25 +13,21 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'Пароль должен быть не менее 6 символов' });
         }
 
-        // Проверка существования пользователя
         const existingUser = await User.findOne({
-            $or: [{ email }, { username }]
+            $or: [{ username }]
         });
 
         if (existingUser) {
-            return res.status(400).json({ error: 'Пользователь с таким email или именем уже существует' });
+            return res.status(400).json({ error: 'Пользователь с таким именем уже существует' });
         }
 
-        // Создание пользователя
         const user = new User({
             username,
-            email,
             password,
         });
 
         await user.save();
 
-        // Генерация токена
         const token = generateToken(user._id);
 
         res.status(201).json({
@@ -41,7 +36,6 @@ const register = async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email,
                 rank: user.rank,
                 rating: user.rating,
                 gamesPlayed: user.gamesPlayed,

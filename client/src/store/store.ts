@@ -1,6 +1,9 @@
 import { configureStore, type ReducersMapObject } from '@reduxjs/toolkit';
 
 import { GameboardReducer } from '@/entities/GameBoard';
+import { LeaderboardReducer } from '@/entities/Leaderboard';
+import { RoomReducer } from '@/entities/Room';
+import { UserReducer } from '@/entities/User';
 
 import { $api } from '@/shared/api';
 
@@ -14,7 +17,10 @@ export function CreateReduxStore(
     const rootReducers: ReducersMapObject<StateSchema> = {
         ...lazyReducers,
 
+        user: UserReducer,
         board: GameboardReducer,
+        leaderboard: LeaderboardReducer,
+        rooms: RoomReducer,
     };
 
     const reducerManager = createReducerManager(rootReducers);

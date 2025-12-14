@@ -4,11 +4,11 @@ const setupRoomHandlers = require('./roomHandlers');
 const setupGameHandlers = require('./gameHandlers');
 
 const setupSocket = (io) => {
-    // Middleware для аутентификации сокетов
     // io.use(authenticateSocket);
 
     io.on('connection', async (socket) => {
         console.log(`✅ \tNew client connected: ${socket.id} (User: ${socket.user?.username || 'Anonymous'})`);
+        socket.emit('system', {message: 'Соединение с сервером установлено'})
 
         try {
             const [leaderboard, existingRooms] = await Promise.all([
@@ -17,10 +17,10 @@ const setupSocket = (io) => {
             ]);
 
             if (leaderboard.length) {
-                socket.emit('leaderboard', { games: leaderboard });
+                socket.emit('leaderboard', leaderboard);
             }
             if (existingRooms.length) {
-                socket.emit('existing-rooms', { rooms: existingRooms });
+                socket.emit('existing-rooms', existingRooms);
             }
         } catch (err) {
             console.error('Error on connection init:', err);
@@ -52,9 +52,7 @@ const setupSocket = (io) => {
                 playerRoom.markModified('players');
                 await playerRoom.save();
 
-                io.emit('existing-rooms', {
-                    rooms: await Room.find({}).select('id players').lean(),
-                });
+                io.emit('existing-rooms', await Room.find({}).select('id players').lean());
             }
         });
     });

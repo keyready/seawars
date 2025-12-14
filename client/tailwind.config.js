@@ -8,8 +8,30 @@ export default {
         './node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}',
     ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                gradStart: '#919BFF',
+                gradEnd: '#133A94',
+            },
+            gradientColorStops: {
+                gradStart: '#919BFF',
+                gradEnd: '#133A94',
+            },
+            fontFamily: {
+                'cs-font': ['CSGOFont', 'sans-serif'],
+            },
+        },
     },
     darkMode: 'class',
-    plugins: [heroui()],
+    plugins: [
+        heroui({
+            themes: {
+                dark: {
+                    colors: {
+                        danger: '#f00',
+                    },
+                },
+            },
+        }),
+    ],
 };

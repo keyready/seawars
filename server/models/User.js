@@ -11,13 +11,6 @@ const UserSchema = new Schema({
         minlength: 3,
         maxlength: 20,
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-        lowercase: true,
-    },
     password: {
         type: String,
         required: true,
@@ -25,8 +18,28 @@ const UserSchema = new Schema({
     },
     rank: {
         type: String,
-        default: 'Новичок',
-        enum: ['Новичок', 'Матрос', 'Старшина', 'Лейтенант', 'Капитан', 'Адмирал'],
+        default: 'Sailor',
+        enum: [
+            'Sailor',
+            'Senior sailor',
+            'Foreman of the 2nd article',
+            'Foreman of the 1st article',
+            'Chief Petty Officer',
+            "Chief Ship's Petty Officer",
+            'The Midshipman',
+            'Senior Midshipman',
+            'Second Lieutenant',
+            'Lieutenant',
+            'Senior Lieutenant',
+            'Captain-Lieutenant',
+            'Captain of the 3rd rank',
+            'Captain of the 2nd rank',
+            'Captain of the 1st rank',
+            'Rear Admiral',
+            'Vice Admiral',
+            'The Admiral',
+            'Admiral of the Fleet',
+        ],
     },
     rating: {
         type: Number,
@@ -55,17 +68,11 @@ const UserSchema = new Schema({
     timestamps: true,
 });
 
-// Хеширование пароля перед сохранением
-UserSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
+UserSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
     
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (error) {
-        next(error);
-    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Метод для сравнения паролей

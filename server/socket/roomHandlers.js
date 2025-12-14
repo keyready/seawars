@@ -23,9 +23,7 @@ const setupRoomHandlers = (io, socket) => {
             socket.join(roomId);
 
             io.in(roomId).emit('room-created', { roomId });
-            io.emit('existing-rooms', {
-                rooms: await Room.find({}).select('id players').lean(),
-            });
+            io.emit('existing-rooms', await Room.find({}).select('id players').lean());
         } catch (err) {
             console.error('Error creating room:', err);
             socket.emit('error', { message: 'Failed to create room' });
@@ -48,9 +46,7 @@ const setupRoomHandlers = (io, socket) => {
             socket.emit('joined-room', { roomId, player: playerName });
             socket.to(roomId).emit('player-joined', { player: playerName });
 
-            io.emit('existing-rooms', {
-                rooms: await Room.find({}).select('id players').lean(),
-            });
+            io.emit('existing-rooms', await Room.find({}).select('id players').lean());
         } catch (err) {
             console.error('Error joining room:', err);
             socket.emit('error', { message: 'Failed to join room' });
@@ -105,9 +101,7 @@ const setupRoomHandlers = (io, socket) => {
                     await playerRoom.save();
                 }
 
-                io.emit('existing-rooms', {
-                    rooms: await Room.find({}).select('id players').lean(),
-                });
+                io.emit('existing-rooms', await Room.find({}).select('id players').lean());
             }
         } catch (err) {
             console.error('Error during player left handling:', err);

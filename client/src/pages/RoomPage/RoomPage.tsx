@@ -88,7 +88,7 @@ export default function RoomPage() {
                                     Сбежать!
                                 </Button>
                                 <Button onPress={handleLeaveRoom} color="danger">
-                                    Ретироваться
+                                    Ретироваться!
                                 </Button>
                                 <Button onPress={blocker.reset} color="success">
                                     Драться, как лев
