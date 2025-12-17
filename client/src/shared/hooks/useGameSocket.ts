@@ -9,7 +9,6 @@ import {
     CellState,
     type CurrentPlayer,
     GameboardActions,
-    getCurrentPlayerName,
     getEnemyGameboard,
     getGameRoom,
     getOwnerFleet,
@@ -19,6 +18,7 @@ import {
 import { type Leaderboard, LeaderboardActions } from '@/entities/Leaderboard';
 import { type Room, RoomActions } from '@/entities/Room';
 import type { Cell } from '@/entities/Ship';
+import { getUserData } from '@/entities/User';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 
@@ -52,7 +52,7 @@ export const useGameActions = () => {
     const ownerGameboard = useSelector(getOwnerGameboard);
     const ownerFleet = useSelector(getOwnerFleet);
     const enemyGameboard = useSelector(getEnemyGameboard);
-    const currentName = useSelector(getCurrentPlayerName);
+    const currentName = useSelector(getUserData)?.username || '';
     const currentRoom = useSelector(getGameRoom);
 
     const stateRef = useRef({
@@ -254,7 +254,7 @@ export const useGameActions = () => {
 
         const handleRoomCreated = ({ roomId }: { roomId: string }) => {
             const state = stateRef.current;
-            state.navigate(roomId);
+            state.navigate('/battle/' + roomId);
             state.dispatch(GameboardActions.setGameRoom(roomId));
         };
 

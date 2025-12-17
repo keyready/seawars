@@ -16,7 +16,7 @@ const columns = [
     { key: 'score', label: 'Счет игры' },
 ];
 
-export const LeaderboardTable = () => {
+export const GamesHistoryTable = () => {
     const dispatch = useAppDispatch();
 
     const leaderboards = useSelector(getLeaderboards);
@@ -29,14 +29,14 @@ export const LeaderboardTable = () => {
     const renderTableCell = useCallback((cell: Leaderboard, key: Key) => {
         switch (key) {
             case 'players': {
-                return <p className="tracking-[2px]">{cell.players.join(' vs. ')}</p>;
+                return <p>{cell.players.join(' vs. ')}</p>;
             }
             case 'winner': {
-                return <p className="tracking-[2px] text-yellow-500">{cell.winnerName}</p>;
+                return <p className="text-yellow-500">{cell.winnerName}</p>;
             }
             case 'date': {
                 return (
-                    <p className="tracking-[2px]">
+                    <p>
                         {new Date(cell.createdAt).toLocaleString('ru-RU', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -69,7 +69,7 @@ export const LeaderboardTable = () => {
     return (
         <Table
             classNames={{
-                th: 'bg-blue-800 tracking-[2px] text-white shadow-xl',
+                th: 'bg-blue-800 text-white shadow-xl',
             }}
             removeWrapper
             aria-label="Last games"
@@ -80,7 +80,7 @@ export const LeaderboardTable = () => {
             <TableBody
                 isLoading={isLoading}
                 emptyContent="Игр пока нет или произошла ошибка загрузки"
-                items={leaderboards}
+                items={leaderboards || []}
             >
                 {(item) => (
                     <TableRow key={item.id}>

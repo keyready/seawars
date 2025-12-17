@@ -4,15 +4,14 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useCallback } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { signupUser } from '@/entities/User';
-
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { Input } from '@/shared/ui/Input';
 
+import { loginUSer } from '../model/services/loginUser';
 import type { LoginSchema } from '../model/types/User';
 import { registrationSchema } from '../model/types/UserFormSchemas';
 
-export const SignupForm = () => {
+export const LoginForm = () => {
     const dispatch = useAppDispatch();
 
     const {
@@ -27,8 +26,8 @@ export const SignupForm = () => {
     const handleFormSubmit = useCallback(
         (user: LoginSchema) => {
             addToast({
-                promise: dispatch(signupUser(user)),
-                title: 'Регистрируем вас...',
+                promise: dispatch(loginUSer(user)),
+                title: 'Авторизация...',
             });
         },
         [dispatch],
@@ -64,7 +63,7 @@ export const SignupForm = () => {
                 control={control}
             />
             <Button className="self-end bg-blue-700" type="submit">
-                Зарегистрироваться
+                Войти
             </Button>
         </form>
     );

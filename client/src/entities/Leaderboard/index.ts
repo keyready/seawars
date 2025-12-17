@@ -7,4 +7,4 @@ export { LeaderboardReducer, LeaderboardActions } from './model/slice/Leaderboar
 
 export { fetchLeaderboards } from './model/services/getLeaderboards';
 
-export { LeaderboardTable } from './ui/LeaderboardTable';
+export { GamesHistoryTable } from './ui/GamesHistoryTable';

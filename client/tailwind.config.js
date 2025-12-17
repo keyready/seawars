@@ -19,6 +19,7 @@ export default {
             },
             fontFamily: {
                 'cs-font': ['CSGOFont', 'sans-serif'],
+                'nunito-font': ['Nunito', 'sans-serif'],
             },
         },
     },

@@ -5,8 +5,6 @@ import { RouterProvider } from 'react-router/dom';
 import { StrictMode } from 'react';
 import { createBrowserRouter } from 'react-router';
 
-import { App } from '@/app/App';
-
 import MainPage from '@/pages/MainPage';
 import RoomPage from '@/pages/RoomPage';
 
@@ -19,10 +17,6 @@ const router = createBrowserRouter([
     {
         path: '/',
         element: <MainPage />,
-    },
-    {
-        path: '/battle',
-        element: <App />,
     },
     {
         path: '/battle/:roomId',

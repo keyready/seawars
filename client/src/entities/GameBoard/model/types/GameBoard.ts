@@ -28,7 +28,6 @@ export interface GameBoardSchema {
     ownerBoard: GameBoard;
     enemyBoard: GameboardCellsState;
 
-    name: string;
     isPlayerReady: boolean;
 
     phase: BattlePhase;

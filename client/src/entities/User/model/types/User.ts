@@ -1,6 +1,7 @@
 import { type UserRankKeys } from './Ranks';
 
 export interface User {
+    id: string;
     username: string;
     password: string;
     rank: UserRankKeys;

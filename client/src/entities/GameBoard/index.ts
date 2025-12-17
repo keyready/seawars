@@ -12,7 +12,6 @@ export {
 export {
     getOwnerGameboard,
     getEnemyGameboard,
-    getCurrentPlayerName,
     getOwnerFleet,
     getCurrentTurn,
     getGameRoom,

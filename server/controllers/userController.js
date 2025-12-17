@@ -31,12 +31,12 @@ const getUserProfile = async (req, res) => {
 const getLeaderboard = async (req, res) => {
     try {
         const users = await User.find({})
-            .select('-password -email')
+            .select('-password')
             .sort({ rating: -1 })
             .limit(100)
             .lean();
 
-        res.json({ leaderboard: users });
+        res.json(users);
     } catch (error) {
         console.error('Ошибка получения таблицы лидеров:', error);
         res.status(500).json({ error: 'Ошибка при получении таблицы лидеров' });
@@ -88,7 +88,6 @@ const updateProfile = async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email,
                 rank: user.rank,
                 rating: user.rating,
                 gamesPlayed: user.gamesPlayed,

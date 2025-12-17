@@ -15,7 +15,8 @@ import { Navigate, useBlocker, useParams } from 'react-router';
 
 import { Page } from '@/widgets/Page';
 
-import { DroppableShipBoard, getCurrentPlayerName } from '@/entities/GameBoard';
+import { DroppableShipBoard } from '@/entities/GameBoard';
+import { getUserData } from '@/entities/User';
 
 import { useGameActions } from '@/shared/hooks/useGameSocket';
 
@@ -25,7 +26,7 @@ export default function RoomPage() {
 
     const [isLeaveModalEnabled, setIsLeaveModalEnabled] = useState<boolean>(false);
 
-    const name = useSelector(getCurrentPlayerName);
+    const name = useSelector(getUserData)?.username || '';
     const blocker = useBlocker(true);
 
     useEffect(() => {
@@ -55,7 +56,7 @@ export default function RoomPage() {
                 <h1
                     className={cn(
                         'bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text',
-                        'text-5xl font-bold italic text-transparent',
+                        'font-cs-font text-5xl font-bold italic text-transparent',
                     )}
                 >
                     Морской бой

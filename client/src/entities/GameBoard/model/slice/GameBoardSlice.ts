@@ -37,7 +37,6 @@ const initialState: GameBoardSchema = {
         hitCells: [],
     },
 
-    name: '',
     isPlayerReady: false,
     phase: 'placing',
     currentPlayer: 'me',
@@ -92,9 +91,6 @@ const GameStateSlice = createSlice({
         setCurrentTurn: (state, action: PayloadAction<CurrentPlayer>) => {
             state.currentPlayer = action.payload;
         },
-        setName: (state, action: PayloadAction<string>) => {
-            state.name = action.payload;
-        },
         setGameRoom: (state, action: PayloadAction<string>) => {
             state.room = action.payload;
         },
@@ -107,7 +103,6 @@ const GameStateSlice = createSlice({
                 hitCells: [],
                 missCells: [],
             };
-            state.name = '';
             state.phase = 'placing';
             state.currentPlayer = 'me';
             state.room = undefined;

@@ -1,8 +1,8 @@
 import { Page } from '@/widgets/Page';
 
-import { LeaderboardTable } from '@/entities/Leaderboard';
+import { GamesHistoryTable } from '@/entities/Leaderboard';
 import { RoomsTable } from '@/entities/Room';
-import { SignupForm } from '@/entities/User';
+import { LeaderboardBlock, ProfileBlock } from '@/entities/User';
 
 import { useGameActions } from '@/shared/hooks/useGameSocket';
 import { Card } from '@/shared/ui/Card';
@@ -12,27 +12,16 @@ export default function MainPage() {
 
     return (
         <Page>
-            <h1 className="text-[80px]">Морской бой</h1>
-            <div className="flex h-full w-full gap-10">
-                <div className="flex h-full w-full flex-col gap-10">
-                    <Card>
-                        <h2 className="text-4xl">Топ игроков</h2>
-                    </Card>
-                    <Card>
-                        <h2 className="text-4xl">Недавние игры</h2>
-                        <LeaderboardTable />
-                    </Card>
-                </div>
-                <div className="flex h-full w-full flex-col gap-10">
-                    <Card className="h-full w-full bg-red-200">
-                        <h2 className="text-4xl">Активные комнаты</h2>
-                        <RoomsTable />
-                    </Card>
-                    <Card className="h-full w-full bg-red-200">
-                        <h2 className="mb-4 text-4xl">Авторизация</h2>
-                        <SignupForm />
-                    </Card>
-                </div>
+            <h1 className="font-cs-font text-[80px]">Морской бой</h1>
+            <div className="grid h-full w-full grid-cols-2 gap-10">
+                <LeaderboardBlock />
+                <Card className="h-[400px] w-full bg-red-200" title="Активные комнаты">
+                    <RoomsTable />
+                </Card>
+                <Card className="h-[400px]" title="Недавние игры">
+                    <GamesHistoryTable />
+                </Card>
+                <ProfileBlock />
             </div>
         </Page>
     );

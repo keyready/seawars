@@ -18,7 +18,7 @@ import { type Key, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
 
-import { GameboardActions, getCurrentPlayerName, getGameRoom } from '@/entities/GameBoard';
+import { getUserData, UserActions } from '@/entities/User';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useGameActions } from '@/shared/hooks/useGameSocket';
@@ -38,32 +38,49 @@ export const RoomsTable = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const { joinRoom } = useGameActions();
+    const { joinRoom, createRoom } = useGameActions();
 
     const rooms = useSelector(getRooms);
     const isLoading = useSelector(getRoomsIsLoading);
-    const username = useSelector(getCurrentPlayerName);
-    const roomId = useSelector(getGameRoom);
+    const username = useSelector(getUserData)?.username;
 
     const [isModalOpened, setIsModalOpened] = useState<boolean>(false);
+    const [isAnonymousPlayer, setIsAnonymousPlayer] = useState<boolean>(false);
+    const [localRoom, setLocalRoom] = useState<string>('');
 
     useEffect(() => {
         dispatch(fetchRooms());
     }, [dispatch]);
 
-    const handleConnectRoom = useCallback(() => {
+    const handleCreateRoom = useCallback(() => {
         if (!username) {
             setIsModalOpened(true);
+            setIsAnonymousPlayer(true);
             return;
         }
-        if (!roomId) {
-            addToast({ color: 'danger', title: 'Не удалось определить комнату' });
-            return;
-        }
-        console.log(roomId);
-        joinRoom(roomId, username);
-        navigate(`/battle/${roomId}`);
-    }, [joinRoom, navigate, roomId, username]);
+        createRoom(username);
+    }, [username, createRoom]);
+
+    const handleConnectRoom = useCallback(
+        (roomId: string) => {
+            if (!username) {
+                setIsModalOpened(true);
+                return;
+            }
+            if (isAnonymousPlayer) {
+                handleCreateRoom();
+                return;
+            }
+            if (!roomId) {
+                addToast({ color: 'danger', title: 'Не удалось определить комнату' });
+                return;
+            }
+            setLocalRoom(roomId);
+            joinRoom(roomId, username);
+            navigate(`/battle/${roomId}`);
+        },
+        [handleCreateRoom, isAnonymousPlayer, joinRoom, navigate, username],
+    );
 
     const renderTableCell = useCallback(
         (cell: Room, key: Key) => {
@@ -73,10 +90,9 @@ export const RoomsTable = () => {
                 case 'players':
                     return <p className="w-full">{cell.players.length} / 2</p>;
                 default:
-                    dispatch(GameboardActions.setGameRoom(cell.id));
                     return (
                         <Button
-                            onPress={handleConnectRoom}
+                            onPress={() => handleConnectRoom(cell.id)}
                             className="ml-auto"
                             size="sm"
                             color="primary"
@@ -86,14 +102,22 @@ export const RoomsTable = () => {
                     );
             }
         },
-        [dispatch, handleConnectRoom],
+        [handleConnectRoom],
     );
 
     return (
-        <>
+        <div className="relative w-full">
+            <Button
+                onPress={handleCreateRoom}
+                color="success"
+                size="sm"
+                className="absolute -top-9 right-0 z-50"
+            >
+                Создать комнату
+            </Button>
             <Table
                 classNames={{
-                    th: 'bg-blue-800 tracking-[2px] text-white shadow-xl',
+                    th: 'bg-blue-800 text-white shadow-xl',
                 }}
                 removeWrapper
                 aria-label="Last games"
@@ -101,7 +125,11 @@ export const RoomsTable = () => {
                 <TableHeader columns={columns} className="bg-red-200">
                     {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
                 </TableHeader>
-                <TableBody isLoading={isLoading} emptyContent="Активных комнат нет" items={rooms}>
+                <TableBody
+                    isLoading={isLoading}
+                    emptyContent="Активных комнат нет"
+                    items={rooms || []}
+                >
                     {(item) => (
                         <TableRow key={item.id}>
                             {(columnKey) => (
@@ -113,21 +141,23 @@ export const RoomsTable = () => {
             </Table>
 
             <Modal size="2xl" isOpen={isModalOpened} onClose={() => setIsModalOpened(false)}>
-                <ModalContent>
+                <ModalContent className="bg-gradient-to-br from-gradStart to-gradEnd">
                     <ModalHeader className="text-white">Вы не авторизовались</ModalHeader>
                     <ModalBody>
                         <Input
                             value={username}
-                            onValueChange={(val) => dispatch(GameboardActions.setName(val))}
+                            onValueChange={(val) => dispatch(UserActions.setTemporaryName(val))}
                             isRequired
                             label="Как вас зовут?"
                         />
                     </ModalBody>
                     <ModalFooter>
-                        <Button onPress={handleConnectRoom}>Продолжить</Button>
+                        <Button color="primary" onPress={() => handleConnectRoom(localRoom)}>
+                            Продолжить
+                        </Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-        </>
+        </div>
     );
 };
