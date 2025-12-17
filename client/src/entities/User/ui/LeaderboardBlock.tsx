@@ -1,4 +1,12 @@
-import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@heroui/react';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow,
+    Tooltip,
+} from '@heroui/react';
 
 import { type Key, useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -32,9 +40,20 @@ export const LeaderboardBlock = () => {
 
     const renderTableCell = useCallback((cell: User, key: Key) => {
         switch (key) {
-            // username rating rank gamesPlayed gamesWon
             case 'username': {
-                return <p>{cell.username}</p>;
+                return (
+                    <div className="flex items-center gap-2">
+                        {cell.winstreak >= 5 && (
+                            <Tooltip
+                                classNames={{ content: 'bg-[#ff5d00] text-[#ffdf00]' }}
+                                content={`Серия из ${cell.winstreak} побед`}
+                            >
+                                <img className="w-5 -translate-y-1" src="/other/fire.gif" alt="" />
+                            </Tooltip>
+                        )}
+                        <p>{cell.username}</p>
+                    </div>
+                );
             }
             case 'rating': {
                 return <p>{cell.rating}</p>;

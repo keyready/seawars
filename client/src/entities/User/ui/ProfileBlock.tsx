@@ -4,17 +4,18 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { getMe } from '@/entities/User/model/services/getUserData';
-import { RanksTable } from '@/entities/User/ui/RanksTable';
+import { StatisticsWrapper } from '@/entities/Statistics';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { Card } from '@/shared/ui/Card';
 import { Input } from '@/shared/ui/Input';
 
 import { getUserData } from '../model/selectors/userSelectors';
+import { getMe } from '../model/services/getUserData';
 import { userRankMapper } from '../model/types/Ranks';
 
 import { AuthBlock } from './AuthBlock';
+import { RanksTable } from './RanksTable';
 
 export const ProfileBlock = () => {
     const userData = useSelector(getUserData);
@@ -94,6 +95,8 @@ export const ProfileBlock = () => {
                                 value={userRankMapper[userData.rank]}
                             />
                         </div>
+
+                        <StatisticsWrapper />
                     </motion.div>
                 ) : (
                     <AuthBlock />

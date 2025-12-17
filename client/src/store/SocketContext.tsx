@@ -15,7 +15,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         if (!socketInstance && !isInitialized.current) {
             isInitialized.current = true;
             socketInstance = io(
-                'http://192.168.0.100:5000',
+                'http://192.168.0.102:5000',
                 // 'http://localhost:5000',
                 {
                     path: '/socket',

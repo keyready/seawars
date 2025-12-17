@@ -18,7 +18,7 @@ export const Card = ({ children, title, className, ...rest }: CardProps) => {
                 'shadow-2xl',
             )}
         >
-            {title && <h2 className="font-cs-font text-4xl">{title}</h2>}
+            {title && <h2 className="mb-4 font-cs-font text-4xl">{title}</h2>}
             {children}
         </div>
     );

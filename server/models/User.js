@@ -56,6 +56,21 @@ const UserSchema = new Schema({
         default: 0,
         min: 0,
     },
+    winstreak: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    maxWinstreak: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    losestreak: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
     lastGameDate: {
         type: Date,
         default: null,
@@ -75,7 +90,6 @@ UserSchema.pre('save', async function () {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Метод для сравнения паролей
 UserSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
@@ -100,7 +114,7 @@ UserSchema.methods.updateRank = function () {
     else if (r >= 700) this.rank = 'foreman1st';
     else if (r >= 500) this.rank = 'foreman2nd';
     else if (r >= 300) this.rank = 'seniorSailor';
-    else this.rank = 'sailor'; // >=0
+    else this.rank = 'sailor';
 };
 
 /**
@@ -110,35 +124,49 @@ UserSchema.methods.updateRank = function () {
  * @param selfCells сколько клеток подбил
  * @param oppCells сколько клеток потерял
  */
-UserSchema.methods.updateGameStats = function (isWinner, opponentRating, selfCells, oppCells) {
+UserSchema.methods.updateGameStats = function (isWinner, opponentRating, selfCells = 20, oppCells = 0) {
     this.gamesPlayed += 1;
     this.lastGameDate = new Date();
     this.lastOnlineDate = new Date();
 
     if (isWinner) {
         this.gamesWon += 1;
+        this.winstreak += 1;
+        if (this.maxWinstreak < this.winstreak) {
+            this.maxWinstreak = this.winstreak
+        }
+        this.losestreak = 0;
+    } else {
+        this.winstreak = 0;
+        this.losestreak += 1;
     }
 
     let K = 32;
 
+    if (this.gamesPlayed <= 10) {
+        K = 48;
+    }
+
+    if (this.winstreak >= 5) {
+        K = Math.max(16, K * (1 - 0.05 * (this.winstreak - 4)));
+    } else if (this.losestreak >= 5) {
+        K = Math.min(64, K * (1 + 0.1 * (this.losestreak - 4)));
+    }
+
     const ratingDiff = opponentRating - this.rating;
     const E = 1 / (1 + Math.pow(10, ratingDiff / 400));
-
     const S = isWinner ? 1 : 0;
 
     let delta = K * (S - E);
 
-    const totalCells = 20;
-    const dominance = Math.abs(selfCells - oppCells) / totalCells; // 0..1
-
-    if (isWinner && selfCells > oppCells) {
-        delta *= (1 + 0.5 * dominance);
-    } else if (!isWinner && oppCells > selfCells) {
-        delta *= (0.7 + 0.3 * (1 - dominance));
+    const dominance = Math.abs(selfCells - oppCells) / 20;
+    if (isWinner) {
+        delta *= (1 + 0.2 * dominance);
+    } else {
+        delta *= (0.8 + 0.2 * (1 - dominance));
     }
 
-
-    const MAX_DELTA = 100;
+    const MAX_DELTA = isWinner ? 100 : 80;
     delta = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, delta));
 
     this.rating = Math.max(0, Math.round(this.rating + delta));

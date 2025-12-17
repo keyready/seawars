@@ -15,33 +15,26 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 const server = http.createServer(app);
 
-// Настройка CORS
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Настройка Socket.IO
 const io = new Server(server, {
     path: '/socket',
     cors: { origin: '*' },
 });
 
-// Подключение к базе данных
 connectDB();
 
-// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
-// Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// Настройка Socket.IO
 setupSocket(io);
 
-// Настройка очистки неактивных комнат
 setupRoomCleanup(io);
 
 const PORT = process.env.PORT || 5000;

@@ -1,8 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import type { Leaderboard } from '@/entities/Leaderboard';
-
 import { fetchLeaderboards } from '../services/getLeaderboards';
+import type { Leaderboard } from '../types/Leaderboard';
 import type { LeaderboardSchema } from '../types/LeaderboardSchema';
 
 const initialState: LeaderboardSchema = {

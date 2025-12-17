@@ -40,6 +40,8 @@ const register = async (req, res) => {
                 rating: user.rating,
                 gamesPlayed: user.gamesPlayed,
                 gamesWon: user.gamesWon,
+                winStreak: user.winStreak,
+                bestWinStreak: user.bestWinStreak,
             },
         });
     } catch (error) {
@@ -85,6 +87,8 @@ const login = async (req, res) => {
                 gamesWon: user.gamesWon,
                 lastGameDate: user.lastGameDate,
                 lastOnlineDate: user.lastOnlineDate,
+                winStreak: user.winStreak,
+                bestWinStreak: user.bestWinStreak,
             },
         });
     } catch (error) {
@@ -107,6 +111,8 @@ const getMe = async (req, res) => {
             lastOnlineDate: user.lastOnlineDate,
             isCalibrated: user.isCalibrated,
             calibrationGamesLeft: user.calibrationGamesLeft,
+            winStreak: user.winStreak,
+            bestWinStreak: user.bestWinStreak,
         });
     } catch (error) {
         console.error('Ошибка получения данных пользователя:', error);

@@ -1,5 +1,5 @@
 export type { UserSchema } from './model/types/UserSchema';
-export type { User } from './model/types/User';
+export type { User, UserStatisticPoint } from './model/types/User';
 export type { UserRankKeys, UserRank } from './model/types/Ranks';
 export { userRankMapper } from './model/types/Ranks';
 

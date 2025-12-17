@@ -4,12 +4,18 @@ export interface User {
     id: string;
     username: string;
     password: string;
+
     rank: UserRankKeys;
     rating: number;
+
     gamesPlayed: number;
     gamesWon: number;
     lastGameDate: Date;
     lastOnlineDate: Date;
+
+    winstreak: number;
+    losestreak: number;
+    maxWinstreak: number;
 }
 
 export interface SignupAnswer {

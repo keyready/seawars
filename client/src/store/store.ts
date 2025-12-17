@@ -3,6 +3,7 @@ import { configureStore, type ReducersMapObject } from '@reduxjs/toolkit';
 import { GameboardReducer } from '@/entities/GameBoard';
 import { LeaderboardReducer } from '@/entities/Leaderboard';
 import { RoomReducer } from '@/entities/Room';
+import { StatisticsReducer } from '@/entities/Statistics';
 import { UserReducer } from '@/entities/User';
 
 import { $api } from '@/shared/api';
@@ -18,6 +19,7 @@ export function CreateReduxStore(
         ...lazyReducers,
 
         user: UserReducer,
+        statistics: StatisticsReducer,
         board: GameboardReducer,
         leaderboard: LeaderboardReducer,
         rooms: RoomReducer,
