@@ -14,10 +14,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         if (!socketInstance && !isInitialized.current) {
             isInitialized.current = true;
-            socketInstance = io('http://192.168.43.170:5000', {
-                path: '/socket',
-                reconnection: true,
-            });
+            socketInstance = io(
+                'http://192.168.0.100:5000',
+                // 'http://localhost:5000',
+                {
+                    path: '/socket',
+                    reconnection: true,
+                },
+            );
             setSocket(socketInstance);
         } else if (socketInstance) {
             setSocket(socketInstance);

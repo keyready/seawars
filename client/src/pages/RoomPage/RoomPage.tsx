@@ -84,7 +84,7 @@ export default function RoomPage() {
                     </ModalBody>
                     <ModalFooter>
                         <div className="flex items-center gap-3">
-                            <ButtonGroup size="sm">
+                            <ButtonGroup>
                                 <Button onPress={handleLeaveRoom} color="danger">
                                     Сбежать!
                                 </Button>

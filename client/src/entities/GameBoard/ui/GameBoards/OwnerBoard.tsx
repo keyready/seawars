@@ -1,4 +1,4 @@
-import { Alert, Button } from '@heroui/react';
+import { addToast, Alert, Button } from '@heroui/react';
 
 import { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -6,6 +6,8 @@ import { useSelector } from 'react-redux';
 import { ShipOrientation } from '@/entities/Ship';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
+import { useMultiKeyCombo } from '@/shared/hooks/useCheatKeys';
+import { useGameActions } from '@/shared/hooks/useGameSocket';
 
 import { generateRandomFleet } from '../../model/lib/generateFleet';
 import { updateShip } from '../../model/lib/updateShip';
@@ -42,6 +44,13 @@ export const OwnerBoard = ({ onPlacementEnd }: OwnerBoardProps) => {
     const isBattleStarted = useSelector(getGamePhase) === 'battle';
     const isPlayersTurn = useSelector(getCurrentTurn) === 'me';
     const isReady = useSelector(getIsPlayerReady);
+
+    const { getHelp } = useGameActions();
+
+    useMultiKeyCombo(['ShiftLeft', 'KeyC', 'KeyH', 'KeyE', 'KeyA', 'KeyT'], () => {
+        addToast({ title: 'Запрашиваю подкрепление...' });
+        getHelp();
+    });
 
     const generateFleet = useCallback(() => {
         dispatch(GameboardActions.setOwnerFleet(generateRandomFleet()));

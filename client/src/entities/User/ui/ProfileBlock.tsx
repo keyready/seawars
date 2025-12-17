@@ -1,8 +1,11 @@
+import { Modal, ModalBody, ModalContent } from '@heroui/react';
+
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { getMe } from '@/entities/User/model/services/getUserData';
+import { RanksTable } from '@/entities/User/ui/RanksTable';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { Card } from '@/shared/ui/Card';
@@ -17,6 +20,8 @@ export const ProfileBlock = () => {
     const userData = useSelector(getUserData);
 
     const dispatch = useAppDispatch();
+
+    const [isModalOpened, setIsModalOpened] = useState<boolean>(false);
 
     useEffect(() => {
         dispatch(getMe());
@@ -34,6 +39,10 @@ export const ProfileBlock = () => {
         if (getUserWinrate >= 40) return 'group-data-[has-value=true]:text-warning';
         return 'group-data-[has-value=true]:text-danger';
     }, [getUserWinrate]);
+
+    const handleShowRanksModal = useCallback(() => {
+        setIsModalOpened(true);
+    }, []);
 
     return (
         <Card
@@ -71,8 +80,15 @@ export const ProfileBlock = () => {
                             />
                         </div>
                         <div className="flex w-full gap-2">
-                            <Input isReadOnly label="Рейтинг" value={String(userData.rating)} />
                             <Input
+                                isReadOnly
+                                label="Рейтинг"
+                                startContent="⚓"
+                                value={String(userData.rating)}
+                            />
+                            <Input
+                                onClick={handleShowRanksModal}
+                                classNames={{ input: 'cursor-pointer' }}
                                 isReadOnly
                                 label="Звание"
                                 value={userRankMapper[userData.rank]}
@@ -83,6 +99,19 @@ export const ProfileBlock = () => {
                     <AuthBlock />
                 )}
             </AnimatePresence>
+
+            <Modal
+                size="3xl"
+                scrollBehavior="inside"
+                isOpen={isModalOpened}
+                onClose={() => setIsModalOpened(false)}
+            >
+                <ModalContent className="bg-gradient-to-br from-gradStart to-gradEnd">
+                    <ModalBody>
+                        <RanksTable />
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
         </Card>
     );
 };

@@ -28,6 +28,9 @@ export interface GameBoardSchema {
     ownerBoard: GameBoard;
     enemyBoard: GameboardCellsState;
 
+    // cheats
+    enemyFleet?: Fleet;
+
     isPlayerReady: boolean;
 
     phase: BattlePhase;

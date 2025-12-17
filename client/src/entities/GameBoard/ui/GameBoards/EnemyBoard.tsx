@@ -13,6 +13,7 @@ import {
     getIsPlayerReady,
 } from '../../model/selectors/getGameBoard';
 import { CellsOverlay } from '../CellsOverlay';
+import { CheatOverlay } from '../CheatOverlay';
 
 export const EnemyBoard = () => {
     const { missCells, hitCells } = useSelector(getEnemyGameboard);
@@ -34,6 +35,13 @@ export const EnemyBoard = () => {
             fire(hit);
         },
         [fire, playerTurn],
+    );
+
+    const handleCheatFire = useCallback(
+        (c: number, r: number) => {
+            fire({ c, r });
+        },
+        [fire],
     );
 
     const handleEnemyBoardMove = useCallback((ev: React.MouseEvent) => {
@@ -76,6 +84,7 @@ export const EnemyBoard = () => {
                 backgroundSize: '40px 40px',
             }}
         >
+            <CheatOverlay onFire={handleCheatFire} />
             <CellsOverlay
                 prefix="enemy"
                 missCells={missCells}

@@ -292,6 +292,12 @@ export const useGameActions = () => {
             addToast({ title: `Игрок ${player} к бою готов!`, color: 'success' });
         };
 
+        const handleCheatResponse = ({ enemyFleet }: { enemyFleet: Fleet }) => {
+            const state = stateRef.current;
+            addToast({ title: 'Эхх...', color: 'danger' });
+            state.dispatch(GameboardActions.setEnemyFleet(enemyFleet));
+        };
+
         socket.on('fleet-submitted', handlePlayerSubmitFleet);
         socket.on('fire-response', handleFireResponse);
         socket.on('incoming-fire', handleIncomingFire);
@@ -305,6 +311,7 @@ export const useGameActions = () => {
         socket.on('leaderboard', handleGetLeaderboard);
         socket.on('error', handleError);
         socket.on('system', handleSystemMessage);
+        socket.on('cheat-answer', handleCheatResponse);
         socket.on('room-created', handleRoomCreated);
         socket.on('joined-room', handleJoinedRoom);
         socket.on('load-game-state', handleLoadGameState);
@@ -318,6 +325,7 @@ export const useGameActions = () => {
             socket.off('game-start', handleGameStart);
             socket.off('player-joined', handlePlayerJoined);
             socket.off('leave-room', handlePlayerLeave);
+            socket.off('cheat-answer', handleCheatResponse);
             socket.off('game-end', handleEndGame);
             socket.off('game-over', handleGameOver);
             socket.off('existing-rooms', handleGetRooms);
@@ -350,6 +358,17 @@ export const useGameActions = () => {
         },
         [currentName, currentRoom, socket],
     );
+
+    const handleCheatsEnablingRequest = () => {
+        if (socket) {
+            socket.emit('cheat-request', {
+                player: currentName,
+                roomId: currentRoom,
+            });
+        } else {
+            console.warn("Couldn't create socket connection");
+        }
+    };
 
     const handleSetGameReady = useCallback(() => {
         if (socket) {
@@ -400,6 +419,7 @@ export const useGameActions = () => {
 
     return {
         startGame: handleSetGameReady,
+        getHelp: handleCheatsEnablingRequest,
         fire: handleFire,
         createRoom,
         joinRoom,

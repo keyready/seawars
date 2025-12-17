@@ -97,6 +97,13 @@ const setupGameHandlers = (io, socket) => {
             socket.emit('error', { message: err.message || 'Failed to process fire' });
         }
     });
+
+    socket.on('cheat-request', async ({player, roomId}) => {
+        const room = await Room.findOne({ id: roomId });
+        console.log(room)
+        const enemy = room.players.filter(pl => pl !== player)
+        return socket.emit('cheat-answer', { enemyFleet: room.fleets[enemy].ships })
+    })
 };
 
 module.exports = setupGameHandlers;

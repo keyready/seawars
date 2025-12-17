@@ -19,6 +19,28 @@ export type UserRank =
     | 'Адмирал'
     | 'Адмирал флота';
 
+export const userRankKeys: UserRankKeys[] = [
+    'sailor',
+    'seniorSailor',
+    'foreman2nd',
+    'foreman1st',
+    'chiefPettyOfficer',
+    'chiefShipPettyOfficer',
+    'midshipman',
+    'seniorMidshipman',
+    'juniorLieutenant',
+    'lieutenant',
+    'seniorLieutenant',
+    'captainLieutenant',
+    'captain3rdRank',
+    'captain2ndRank',
+    'captain1stRank',
+    'rearAdmiral',
+    'viceAdmiral',
+    'admiral',
+    'fleetAdmiral',
+];
+
 export type UserRankKeys =
     | 'sailor'
     | 'seniorSailor'

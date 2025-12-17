@@ -10,7 +10,8 @@ export default defineConfig({
         port: 3000,
         proxy: {
             '/api': {
-                target: 'http://192.168.43.170:5000/api',
+                target: 'http://192.168.0.100:5000/api',
+                // target: 'http://localhost:5000/api',
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api\//, ''),
             },

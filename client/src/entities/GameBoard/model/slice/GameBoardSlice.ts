@@ -49,6 +49,11 @@ const GameStateSlice = createSlice({
     name: 'GameStateSlice',
     initialState,
     reducers: {
+        // cheat
+        setEnemyFleet: (state, action: PayloadAction<Fleet>) => {
+            state.enemyFleet = action.payload;
+        },
+
         setEnemyMissCells: (state, action: PayloadAction<Cell>) => {
             if (isCellUnique(state.enemyBoard.missCells, action.payload)) {
                 state.enemyBoard.missCells = [...state.enemyBoard.missCells, action.payload];
@@ -106,6 +111,7 @@ const GameStateSlice = createSlice({
             state.phase = 'placing';
             state.currentPlayer = 'me';
             state.room = undefined;
+            state.isPlayerReady = false;
         },
     },
 });

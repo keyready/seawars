@@ -111,8 +111,6 @@ UserSchema.methods.updateRank = function () {
  * @param oppCells сколько клеток потерял
  */
 UserSchema.methods.updateGameStats = function (isWinner, opponentRating, selfCells, oppCells) {
-    console.log(isWinner, opponentRating, selfCells, oppCells)
-
     this.gamesPlayed += 1;
     this.lastGameDate = new Date();
     this.lastOnlineDate = new Date();
@@ -129,7 +127,6 @@ UserSchema.methods.updateGameStats = function (isWinner, opponentRating, selfCel
     const S = isWinner ? 1 : 0;
 
     let delta = K * (S - E);
-    console.log('delta 1', delta)
 
     const totalCells = 20;
     const dominance = Math.abs(selfCells - oppCells) / totalCells; // 0..1
@@ -140,13 +137,10 @@ UserSchema.methods.updateGameStats = function (isWinner, opponentRating, selfCel
         delta *= (0.7 + 0.3 * (1 - dominance));
     }
 
-    console.log('delta 2', delta)
 
     const MAX_DELTA = 100;
     delta = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, delta));
-    console.log('delta 3', delta)
 
-    console.log('result rating after game', Math.max(0, Math.round(this.rating + delta)))
     this.rating = Math.max(0, Math.round(this.rating + delta));
 
     this.updateRank();

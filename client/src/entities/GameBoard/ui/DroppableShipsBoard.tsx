@@ -49,7 +49,7 @@ export const DroppableShipBoard = ({ type }: DroppableShipBoardProps) => {
         <DndContext onDragEnd={handleDragEnd}>
             <div className="relative">
                 <div
-                    className="absolute top-0 left-0 h-[400px] w-[400px] opacity-70"
+                    className="absolute left-0 top-0 h-[400px] w-[400px] opacity-70"
                     style={{
                         background: 'url(/backgrounds/seawaves.webp)',
                         backgroundPosition: 'center',

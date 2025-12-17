@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from 
 import { type Key, useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
+import { getRanksStyles } from '@/entities/User/model/lib/getRanksRatingMapper';
+
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { Card } from '@/shared/ui/Card';
 
@@ -38,7 +40,16 @@ export const LeaderboardBlock = () => {
                 return <p>{cell.rating}</p>;
             }
             case 'rank': {
-                return <p>{userRankMapper[cell.rank]}</p>;
+                return (
+                    <div className="flex items-center gap-2">
+                        <img
+                            className="h-[20px]"
+                            alt={userRankMapper[cell.rank]}
+                            src={`/ranks/${cell.rank}_rotated.webp`}
+                        />
+                        <p className={getRanksStyles(cell.rank)}>{userRankMapper[cell.rank]}</p>
+                    </div>
+                );
             }
             case 'gamesPlayed': {
                 return <p>{cell.gamesPlayed}</p>;
