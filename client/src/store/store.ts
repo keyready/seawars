@@ -1,5 +1,7 @@
 import { configureStore, type ReducersMapObject } from '@reduxjs/toolkit';
 
+import { ChatReducer } from '@/features/Chat';
+
 import { GameboardReducer } from '@/entities/GameBoard';
 import { LeaderboardReducer } from '@/entities/Leaderboard';
 import { RoomReducer } from '@/entities/Room';
@@ -23,6 +25,7 @@ export function CreateReduxStore(
         board: GameboardReducer,
         leaderboard: LeaderboardReducer,
         rooms: RoomReducer,
+        chat: ChatReducer,
     };
 
     const reducerManager = createReducerManager(rootReducers);

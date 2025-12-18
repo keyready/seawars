@@ -11,6 +11,7 @@ const GameLogSchema = new Schema({
     },
     createdAt: Date,
     endedAt: Date,
+    ratingDelta: [Number]
 });
 
 const Gamelogs = mongoose.model('Gamelogs', GameLogSchema);

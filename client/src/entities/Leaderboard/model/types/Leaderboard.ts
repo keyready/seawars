@@ -5,6 +5,7 @@ export interface Leaderboard {
     createdAt: Date;
     endedAt: Date;
     scores: { [playerName: string]: number };
+    ratingDelta: [number, number];
 }
 
 export interface FetchLeaderboardsParams {

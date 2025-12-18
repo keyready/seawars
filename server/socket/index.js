@@ -2,6 +2,7 @@ const { authenticateSocket } = require('../middleware/auth');
 const { Room, Gamelogs } = require('../models');
 const setupRoomHandlers = require('./roomHandlers');
 const setupGameHandlers = require('./gameHandlers');
+const setupChatHandlers = require('./chatHandlers');
 
 const setupSocket = (io) => {
     // io.use(authenticateSocket);
@@ -25,6 +26,7 @@ const setupSocket = (io) => {
         // Настройка обработчиков
         setupRoomHandlers(io, socket);
         setupGameHandlers(io, socket);
+        setupChatHandlers(io, socket);
 
         socket.on('disconnect', async () => {
             console.log(`❌ \tClient disconnected: ${socket.id}`);

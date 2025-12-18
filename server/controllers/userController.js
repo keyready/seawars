@@ -56,6 +56,7 @@ const getGames = async (req, res) => {
             Gamelogs.find({})
                 .limit(limit)
                 .skip(skip)
+                .sort({createdAt: -1})
                 .lean(),
             Gamelogs.countDocuments({})
         ]);

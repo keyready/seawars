@@ -24,6 +24,11 @@ const updateUserStatsAfterGame = async (winnerName, loserName, totalWinnerHitCel
             loser.updateGameStats(false, winnerRating, totalWinnerHitCells, totalOpponentHitCells);
             await loser.save();
         }
+        
+        return {
+            winnerDelta: winnerRating - await User.find({username: winnerName }).rating,
+            loserDelta: loserRating - await User.find({username: loserName }).rating
+        }
     } catch (error) {
         console.error('Ошибка обновления статистики пользователей:', error);
     }
@@ -85,6 +90,8 @@ const createGameLog = async (room, winner) => {
         (sum, s) => sum + s.hitCells.length, 0
     ) || 0;
 
+    const {loserRating, winnerRating} = await updateUserStatsAfterGame(winner, opponent, totalWinnerHitCells, totalOpponentHitCells);
+
     const gameLog = new Gamelogs({
         id: room.id,
         players: room.players,
@@ -95,12 +102,10 @@ const createGameLog = async (room, winner) => {
         },
         createdAt: room.createdAt,
         endedAt: new Date(),
+        ratingDelta: [loserRating, winnerRating]
     });
 
     await gameLog.save();
-
-    // Обновляем статистику пользователей
-    await updateUserStatsAfterGame(winner, opponent, totalWinnerHitCells, totalOpponentHitCells);
 
     return gameLog;
 };

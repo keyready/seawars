@@ -2,6 +2,8 @@ import type { EnhancedStore, Reducer, ReducersMapObject, UnknownAction } from '@
 
 import type { AxiosInstance } from 'axios';
 
+import type { ChatSchema } from '@/features/Chat';
+
 import type { GameBoardSchema } from '@/entities/GameBoard';
 import type { LeaderboardSchema } from '@/entities/Leaderboard';
 import type { RoomSchema } from '@/entities/Room';
@@ -14,6 +16,7 @@ export interface StateSchema {
     board: GameBoardSchema;
     leaderboard: LeaderboardSchema;
     rooms: RoomSchema;
+    chat: ChatSchema;
 
     // asynchronous reducers
 }

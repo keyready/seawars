@@ -140,8 +140,7 @@ export const EnemyBoard = () => {
             }
 
             setHoveredCell(hit);
-            if (helpTools?.enabled) {
-                console.log(Math.floor(y / 40));
+            if (helpTools?.enabled === 'airplane') {
                 dispatch(
                     GameboardActions.setHelpTools({
                         ...helpTools,

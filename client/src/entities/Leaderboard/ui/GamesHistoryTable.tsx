@@ -26,6 +26,7 @@ const columns = [
     { key: 'winner', label: 'Победитель' },
     { key: 'date', label: 'Дата и время проведения' },
     { key: 'score', label: 'Счет игры' },
+    { key: 'ratingDelta', label: 'Изменение рейтинга' },
 ];
 
 export const GamesHistoryTable = () => {
@@ -70,6 +71,9 @@ export const GamesHistoryTable = () => {
                     </p>
                 );
             }
+            case 'ratingDelta': {
+                return <p>{cell.ratingDelta?.join(' | ') || '—'}</p>;
+            }
             default: {
                 return (
                     <p>
@@ -97,7 +101,7 @@ export const GamesHistoryTable = () => {
                         color="primary"
                         variant="light"
                         page={page}
-                        total={Math.round(totalGames / 10) || 1}
+                        total={Math.round(totalGames / 15) || 1}
                         onChange={(page) => setPage(page)}
                     />
                 </div>
