@@ -10,5 +10,6 @@ export const getCurrentTurn = (state: StateSchema) => state.board.currentPlayer;
 export const getGameRoom = (state: StateSchema) => state.board.room;
 export const getGamePhase = (state: StateSchema) => state.board.phase;
 export const getGamingRooms = (state: StateSchema) => state.board.existingRooms;
+export const getHelpTools = (state: StateSchema) => state.board.helpTools;
 // cheat
 export const getEnemyFleet = (state: StateSchema) => state.board.enemyFleet;

@@ -3,6 +3,7 @@ import { addToast, Alert, Button } from '@heroui/react';
 import { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+import { WeaknessSupport } from '@/entities/GameBoard/ui/WeaknessSupport';
 import { ShipOrientation } from '@/entities/Ship';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
@@ -116,27 +117,33 @@ export const OwnerBoard = ({ onPlacementEnd }: OwnerBoardProps) => {
     }, [isBattleStarted, isPlayersTurn]);
 
     return (
-        <div className="relative flex flex-col items-center justify-center gap-10">
-            <DropZone id={DROPPABLE_ID} isOver={false}>
-                {fleet.map((ship) => {
-                    const displayX = ship.head.r < 0 ? -150 : ship.head.r * CELL_SIZE;
-                    const displayY =
-                        ship.head.c < 0 ? 30 + ship.id.charCodeAt(0) * 20 : ship.head.c * CELL_SIZE;
+        <div className="relative flex">
+            <WeaknessSupport />
 
-                    return (
-                        <DraggableShip
-                            key={ship.id}
-                            id={ship.id}
-                            src={SHIP_IMAGES[ship.size]}
-                            initialPosition={{ x: displayX, y: displayY }}
-                            direction={ship.orientation === 'hor' ? 'hor' : 'vert'}
-                            onDirectionChange={handleDirectionChange}
-                        />
-                    );
-                })}
-            </DropZone>
-            <div className="flex w-full items-center justify-center gap-4">
-                {isReady ? renderPlayerReadyAlerts : renderReadyControls}
+            <div className="flex flex-col items-center justify-center gap-10">
+                <DropZone id={DROPPABLE_ID} isOver={false}>
+                    {fleet.map((ship) => {
+                        const displayX = ship.head.r < 0 ? -150 : ship.head.r * CELL_SIZE;
+                        const displayY =
+                            ship.head.c < 0
+                                ? 30 + ship.id.charCodeAt(0) * 20
+                                : ship.head.c * CELL_SIZE;
+
+                        return (
+                            <DraggableShip
+                                key={ship.id}
+                                id={ship.id}
+                                src={SHIP_IMAGES[ship.size]}
+                                initialPosition={{ x: displayX, y: displayY }}
+                                direction={ship.orientation === 'hor' ? 'hor' : 'vert'}
+                                onDirectionChange={handleDirectionChange}
+                            />
+                        );
+                    })}
+                </DropZone>
+                <div className="flex w-full items-center justify-center gap-4">
+                    {isReady ? renderPlayerReadyAlerts : renderReadyControls}
+                </div>
             </div>
             <CellsOverlay
                 prefix="player"

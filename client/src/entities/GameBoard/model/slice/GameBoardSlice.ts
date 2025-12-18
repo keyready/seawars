@@ -11,6 +11,7 @@ import {
     type CurrentPlayer,
     type Fleet,
     type GameBoardSchema,
+    type HelpTools,
 } from '../types/GameBoard';
 
 const initialOwnerFleet: Fleet = generateShips()
@@ -52,6 +53,10 @@ const GameStateSlice = createSlice({
         // cheat
         setEnemyFleet: (state, action: PayloadAction<Fleet>) => {
             state.enemyFleet = action.payload;
+        },
+
+        setHelpTools: (state, action: PayloadAction<HelpTools>) => {
+            state.helpTools = action.payload;
         },
 
         setEnemyMissCells: (state, action: PayloadAction<Cell>) => {

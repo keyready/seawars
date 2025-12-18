@@ -29,7 +29,7 @@ const updateUserStatsAfterGame = async (winnerName, loserName, totalWinnerHitCel
     }
 };
 
-const processFire = async (room, player, pos) => {
+const processFire = (room, player, pos) => {
     const opponent = player === room.players[0] ? room.players[1] : room.players[0];
 
     if (!room.fleets?.[opponent]?.ready) {
@@ -68,7 +68,6 @@ const processFire = async (room, player, pos) => {
         }
     }
 
-    // Смена хода, если промах
     if (result === 'miss') {
         room.turn = opponent;
     }

@@ -5,13 +5,16 @@ import { useSelector } from 'react-redux';
 
 import type { Cell } from '@/entities/Ship';
 
+import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 import { useGameActions } from '@/shared/hooks/useGameSocket';
 
 import {
     getCurrentTurn,
     getEnemyGameboard,
+    getHelpTools,
     getIsPlayerReady,
 } from '../../model/selectors/getGameBoard';
+import { GameboardActions } from '../../model/slice/GameBoardSlice';
 import { CellsOverlay } from '../CellsOverlay';
 import { CheatOverlay } from '../CheatOverlay';
 
@@ -20,21 +23,41 @@ export const EnemyBoard = () => {
 
     const isReady = useSelector(getIsPlayerReady);
     const playerTurn = useSelector(getCurrentTurn) === 'me';
+    const helpTools = useSelector(getHelpTools);
 
-    const { fire } = useGameActions();
+    const dispatch = useAppDispatch();
+    const { fire, requestWeaknessSupport } = useGameActions();
 
     const [hoveredCell, setHoveredCell] = useState<Cell>();
 
     const handleEnemyBoardFire = useCallback(
         (ev: React.MouseEvent) => {
             if (!playerTurn) return;
+            if (helpTools?.enabled && helpTools?.hoveredRow) {
+                requestWeaknessSupport(helpTools.hoveredRow);
+                dispatch(
+                    GameboardActions.setHelpTools({
+                        enabled: undefined,
+                        hoveredRow: undefined,
+                    }),
+                );
+                return;
+            }
+
             const hit = {
                 c: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerX - 20) / 40))),
                 r: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerY - 20) / 40))),
             };
             fire(hit);
         },
-        [fire, playerTurn],
+        [
+            dispatch,
+            fire,
+            helpTools?.enabled,
+            helpTools?.hoveredRow,
+            playerTurn,
+            requestWeaknessSupport,
+        ],
     );
 
     const handleCheatFire = useCallback(
@@ -44,34 +67,56 @@ export const EnemyBoard = () => {
         [fire],
     );
 
-    const handleEnemyBoardMove = useCallback((ev: React.MouseEvent) => {
-        const rect = ev.currentTarget.getBoundingClientRect();
-        const x = ev.clientX - rect.left;
-        const y = ev.clientY - rect.top;
+    const handleEnemyBoardMove = useCallback(
+        (ev: React.MouseEvent) => {
+            const rect = ev.currentTarget.getBoundingClientRect();
+            const x = ev.clientX - rect.left;
+            const y = ev.clientY - rect.top;
 
-        if (x < 0 || y < 0 || x >= 400 || y >= 400) {
-            setHoveredCell(undefined);
-            return;
-        }
+            if (x < 0 || y < 0 || x >= 400 || y >= 400) {
+                setHoveredCell(undefined);
+                return;
+            }
 
-        const hit = {
-            c: Math.floor(x / 40),
-            r: Math.floor(y / 40),
-        };
+            const hit = {
+                c: Math.floor(x / 40),
+                r: Math.floor(y / 40),
+            };
 
-        if (hit.c < 0 || hit.c > 9 || hit.r < 0 || hit.r > 9) {
-            setHoveredCell(undefined);
-            return;
-        }
+            if (hit.c < 0 || hit.c > 9 || hit.r < 0 || hit.r > 9) {
+                setHoveredCell(undefined);
+                return;
+            }
 
-        setHoveredCell(hit);
-    }, []);
+            setHoveredCell(hit);
+            if (helpTools?.enabled) {
+                console.log(Math.floor(y / 40));
+                dispatch(
+                    GameboardActions.setHelpTools({
+                        ...helpTools,
+                        hoveredRow: Math.floor(y / 40),
+                    }),
+                );
+            }
+        },
+        [dispatch, helpTools],
+    );
+
+    const handleMouseOut = useCallback(() => {
+        setHoveredCell(undefined);
+        dispatch(
+            GameboardActions.setHelpTools({
+                ...helpTools,
+                hoveredRow: undefined,
+            }),
+        );
+    }, [dispatch, helpTools]);
 
     return (
         <div
             onClick={handleEnemyBoardFire}
             onMouseMove={handleEnemyBoardMove}
-            onMouseOut={() => setHoveredCell(undefined)}
+            onMouseOut={handleMouseOut}
             className={cn(
                 'relative h-[400px] w-[400px] rounded-md border-2',
                 isReady && playerTurn ? 'cursor-pointer' : 'cursor-not-allowed',
@@ -91,6 +136,7 @@ export const EnemyBoard = () => {
                 hitCells={hitCells}
                 hoveredCell={hoveredCell}
                 isReady={isReady}
+                hoveredRow={helpTools?.hoveredRow}
             />
         </div>
     );

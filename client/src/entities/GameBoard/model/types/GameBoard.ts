@@ -24,12 +24,23 @@ export interface GameBoard {
     fleet: Fleet;
 }
 
+export type HelpToolsTypes = 'rocket' | 'airplane' | 'mine';
+
+export interface HelpTools {
+    enabled?: HelpToolsTypes;
+    selectedRow?: number;
+    hoveredRow?: number;
+}
+
 export interface GameBoardSchema {
     ownerBoard: GameBoard;
     enemyBoard: GameboardCellsState;
 
     // cheats
     enemyFleet?: Fleet;
+
+    // additional tools
+    helpTools?: HelpTools;
 
     isPlayerReady: boolean;
 

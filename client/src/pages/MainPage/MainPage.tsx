@@ -13,7 +13,7 @@ export default function MainPage() {
     return (
         <Page>
             <h1 className="font-cs-font text-[80px]">Морской бой</h1>
-            <div className="grid h-full w-full grid-cols-2 gap-10">
+            <div className="grid h-full w-full grid-cols-1 gap-10 xl:grid-cols-2">
                 <LeaderboardBlock />
                 <Card className="h-[400px] w-full bg-red-200" title="Активные комнаты">
                     <RoomsTable />

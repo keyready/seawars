@@ -13,10 +13,11 @@ interface CellsOverlayProps {
     hoveredCell?: Cell | undefined;
     prefix: string;
     isReady: boolean;
+    hoveredRow?: number;
 }
 
 export const CellsOverlay = (props: CellsOverlayProps) => {
-    const { missCells, hitCells, hoveredCell, isReady, prefix } = props;
+    const { missCells, hitCells, hoveredCell, hoveredRow, isReady, prefix } = props;
     const playerTurn = useSelector(getCurrentTurn) === 'me';
 
     return (
@@ -63,6 +64,24 @@ export const CellsOverlay = (props: CellsOverlayProps) => {
                         }}
                     />
                 )}
+            {hoveredRow !== undefined &&
+                new Array(10).fill(0).map((_, index) => (
+                    <motion.div
+                        key={prefix + '-hover-row-' + hoveredRow + '-' + index}
+                        initial={{ opacity: 0, scale: 0.6, borderRadius: '50%' }}
+                        exit={{ opacity: 0, scale: 0.6, borderRadius: '50%' }}
+                        animate={{ opacity: 1, scale: 1, borderRadius: 0 }}
+                        transition={{ duration: 0.1 }}
+                        className={cn(
+                            'pointer-events-none absolute z-50 h-10 w-10',
+                            isReady ? 'bg-blue-500/70' : 'bg-gray-500/70',
+                        )}
+                        style={{
+                            top: hoveredRow * 40,
+                            left: index * 40,
+                        }}
+                    />
+                ))}
         </AnimatePresence>
     );
 };

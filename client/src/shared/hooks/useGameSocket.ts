@@ -338,6 +338,23 @@ export const useGameActions = () => {
         };
     }, [socket]);
 
+    const handleWeaknessSupportRequest = useCallback(
+        (line: number) => {
+            const params = {
+                roomId: currentRoom,
+                player: currentName,
+                helpType: 'airforces',
+                helpParams: { horLine: line },
+            };
+            if (socket) {
+                socket.emit('weakness-support', params);
+            } else {
+                console.warn("Couldn't create socket connection");
+            }
+        },
+        [currentName, currentRoom, socket],
+    );
+
     const handlePlayerLeaveRoom = useCallback(() => {
         console.log(`[SOCKET] Player left the room`);
         if (socket) {
@@ -427,5 +444,6 @@ export const useGameActions = () => {
         ownerGameboard,
         enemyGameboard,
         handlePlayerLeaveRoom,
+        requestWeaknessSupport: handleWeaknessSupportRequest,
     };
 };
