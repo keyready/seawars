@@ -68,7 +68,7 @@ export const UserSlice = createSlice({
             })
             .addCase(getUsersLeaderboard.fulfilled, (state, action: PayloadAction<User[]>) => {
                 state.isLoading = false;
-                state.leaderboard = action.payload;
+                state.leaderboard = action.payload.slice(0, 5);
             })
             .addCase(getUsersLeaderboard.rejected, (state) => {
                 state.isLoading = false;

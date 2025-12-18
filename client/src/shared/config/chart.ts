@@ -3,6 +3,7 @@ import {
     BarElement,
     CategoryScale,
     Chart as ChartJS,
+    type ChartOptions,
     Legend,
     LinearScale,
     LineElement,
@@ -10,10 +11,7 @@ import {
     RadialLinearScale,
     Tooltip,
 } from 'chart.js';
-
-// Глобальная регистрация всех используемых типов графиков и шкал.
-// Импортируй этот файл один раз (например, в StatisticsWrapper), чтобы
-// избежать ошибок вида "category is not a registered scale" и проблем с Canvas.
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 ChartJS.register(
     CategoryScale,
@@ -25,8 +23,23 @@ ChartJS.register(
     ArcElement,
     Tooltip,
     Legend,
+    zoomPlugin,
 );
 
-export { ChartJS };
+const options: ChartOptions = {
+    plugins: {
+        zoom: {
+            zoom: {
+                wheel: {
+                    enabled: true,
+                },
+                pinch: {
+                    enabled: true,
+                },
+                mode: 'x',
+            },
+        },
+    },
+};
 
-
+export { ChartJS, options };

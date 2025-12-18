@@ -1,11 +1,23 @@
-import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@heroui/react';
+import {
+    Pagination,
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow,
+} from '@heroui/react';
 
-import { type Key, useCallback, useEffect } from 'react';
+import { type Key, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
 
-import { getLeaderboards, getLeaderboardsIsLoading } from '../model/selectors/leaderboardSelectors';
+import {
+    getGames,
+    getGamesIsLoading,
+    getTotalGames,
+} from '../model/selectors/leaderboardSelectors';
 import { fetchLeaderboards } from '../model/services/getLeaderboards';
 import type { Leaderboard } from '../model/types/Leaderboard';
 
@@ -19,17 +31,20 @@ const columns = [
 export const GamesHistoryTable = () => {
     const dispatch = useAppDispatch();
 
-    const leaderboards = useSelector(getLeaderboards);
-    const isLoading = useSelector(getLeaderboardsIsLoading);
+    const leaderboards = useSelector(getGames);
+    const totalGames = useSelector(getTotalGames);
+    const isLoading = useSelector(getGamesIsLoading);
+
+    const [page, setPage] = useState<number>(1);
 
     useEffect(() => {
-        dispatch(fetchLeaderboards());
-    }, [dispatch]);
+        dispatch(fetchLeaderboards(page));
+    }, [dispatch, page]);
 
     const renderTableCell = useCallback((cell: Leaderboard, key: Key) => {
         switch (key) {
             case 'players': {
-                return <p>{cell.players.join(' vs. ')}</p>;
+                return <p className="max-w-[150px] truncate">{cell.players.join(' vs. ')}</p>;
             }
             case 'winner': {
                 return <p className="text-yellow-500">{cell.winnerName}</p>;
@@ -73,6 +88,20 @@ export const GamesHistoryTable = () => {
             }}
             removeWrapper
             aria-label="Last games"
+            bottomContent={
+                <div className="flex w-full justify-center">
+                    <Pagination
+                        isCompact
+                        showControls
+                        showShadow
+                        color="primary"
+                        variant="light"
+                        page={page}
+                        total={Math.round(totalGames / 10) || 1}
+                        onChange={(page) => setPage(page)}
+                    />
+                </div>
+            }
         >
             <TableHeader columns={columns} className="bg-red-200">
                 {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
@@ -80,7 +109,7 @@ export const GamesHistoryTable = () => {
             <TableBody
                 isLoading={isLoading}
                 emptyContent="Игр пока нет или произошла ошибка загрузки"
-                items={leaderboards || []}
+                items={leaderboards}
             >
                 {(item) => (
                     <TableRow key={item.id}>

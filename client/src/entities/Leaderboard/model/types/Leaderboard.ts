@@ -6,3 +6,9 @@ export interface Leaderboard {
     endedAt: Date;
     scores: { [playerName: string]: number };
 }
+
+export interface FetchLeaderboardsParams {
+    games: Leaderboard[];
+    total: number;
+    hasMore: boolean;
+}

@@ -1,5 +1,8 @@
 import { cn } from '@heroui/react';
+
 import { Line } from 'react-chartjs-2';
+
+import { options } from '@/shared/config/chart';
 
 import type { UserCommonPoint } from '../model/types/Statistics';
 
@@ -47,11 +50,11 @@ export const CommonStatisticsChart = ({ statistics }: LinechartProps) => {
         <div
             className={cn(
                 'flex flex-col items-center justify-center',
-                'h-[350px] w-full rounded-xl bg-sky-200 p-3 text-black',
+                'h-[450px] w-full rounded-xl bg-sky-200 p-3 text-black',
             )}
         >
             {statistics?.length ? (
-                <Line className="text-red-200" data={data} />
+                <Line className="text-red-200" data={data} options={options} />
             ) : (
                 <p>Здесь будет статистика Ваших игр</p>
             )}

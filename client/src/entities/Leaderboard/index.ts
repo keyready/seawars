@@ -1,7 +1,7 @@
 export type { Leaderboard } from './model/types/Leaderboard';
 export type { LeaderboardSchema } from './model/types/LeaderboardSchema';
 
-export { getLeaderboards } from './model/selectors/leaderboardSelectors';
+export { getGames } from './model/selectors/leaderboardSelectors';
 
 export { LeaderboardReducer, LeaderboardActions } from './model/slice/LeaderboardSlice';
 

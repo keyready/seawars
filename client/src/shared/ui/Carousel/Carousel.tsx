@@ -1,10 +1,10 @@
-import { Button } from '@heroui/react';
-
 import Autoplay from 'embla-carousel-autoplay';
 import useEmblaCarousel from 'embla-carousel-react';
 import { type ReactNode, useCallback } from 'react';
 
 import './Carousel.css';
+import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react';
+import { cn } from '@heroui/react';
 
 interface CarouselProps {
     slides: ReactNode[];
@@ -32,12 +32,24 @@ export const Carousel = ({ slides }: CarouselProps) => {
                     </div>
                 ))}
             </div>
-            <Button className="absolute bottom-2 left-2" onPress={scrollPrev}>
-                {'<-'}
-            </Button>
-            <Button className="absolute bottom-2 right-2" onPress={scrollNext}>
-                {'->'}
-            </Button>
+            <button
+                className={cn(
+                    'h-[100px] duration-200 hover:bg-blue-300',
+                    'absolute -left-2 top-1/2 -translate-y-1/2 rounded-xl active:bg-blue-400',
+                )}
+                onClick={scrollPrev}
+            >
+                <RiArrowLeftSLine size={56} className="text-blue-500" />
+            </button>
+            <button
+                className={cn(
+                    'h-[100px] duration-200 hover:bg-blue-300',
+                    'absolute -right-2 top-1/2 -translate-y-1/2 rounded-xl active:bg-blue-400',
+                )}
+                onClick={scrollNext}
+            >
+                <RiArrowRightSLine size={56} className="text-blue-500" />
+            </button>
         </div>
     );
 };

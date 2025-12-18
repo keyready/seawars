@@ -1,4 +1,5 @@
 import { cn } from '@heroui/react';
+
 import { Bar } from 'react-chartjs-2';
 
 import type { GameProgress } from '../model/types/Statistics';
@@ -8,20 +9,13 @@ interface GamesProgressChartProps {
 }
 
 export const GamesProgressChart = ({ statistics }: GamesProgressChartProps) => {
-    const labels = [
-        'Среднее подбитых',
-        'Среднее потерянных',
-        'Макс. подбитых',
-        'Мин. подбитых',
-        'Средняя разница',
-    ];
+    const labels = ['Среднее подбитых', 'Среднее потерянных', 'Макс. подбитых', 'Средняя разница'];
 
     const values = statistics
         ? [
               statistics.averageCellsKilled ?? 0,
               statistics.averageCellsLost ?? 0,
               statistics.maxCellsKilled ?? 0,
-              statistics.minCellsKilled ?? 0,
               statistics.averageCellDiff ?? 0,
           ]
         : [0, 0, 0, 0, 0];
@@ -45,12 +39,10 @@ export const GamesProgressChart = ({ statistics }: GamesProgressChartProps) => {
         <div
             className={cn(
                 'flex flex-col items-center justify-center',
-                'h-[350px] w-full rounded-xl bg-sky-200 p-3 text-black',
+                'h-[450px] w-full rounded-xl bg-sky-200 p-3 text-black',
             )}
         >
             {hasData ? <Bar data={data} /> : <p>Здесь будет статистика боёв по клеткам</p>}
         </div>
     );
 };
-
-

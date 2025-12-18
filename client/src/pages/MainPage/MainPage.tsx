@@ -18,7 +18,7 @@ export default function MainPage() {
                 <Card className="h-[400px] w-full bg-red-200" title="Активные комнаты">
                     <RoomsTable />
                 </Card>
-                <Card className="h-[400px]" title="Недавние игры">
+                <Card className="h-[750px]" title="Недавние игры">
                     <GamesHistoryTable />
                 </Card>
                 <ProfileBlock />

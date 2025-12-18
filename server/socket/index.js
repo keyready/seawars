@@ -11,14 +11,10 @@ const setupSocket = (io) => {
         socket.emit('system', {message: 'Соединение с сервером установлено'})
 
         try {
-            const [leaderboard, existingRooms] = await Promise.all([
-                Gamelogs.find({}).lean(),
+            const [existingRooms] = await Promise.all([
                 Room.find({}).select('id players').lean()
             ]);
 
-            if (leaderboard.length) {
-                socket.emit('leaderboard', leaderboard);
-            }
             if (existingRooms.length) {
                 socket.emit('existing-rooms', existingRooms);
             }

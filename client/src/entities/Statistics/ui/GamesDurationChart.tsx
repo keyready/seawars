@@ -1,6 +1,8 @@
 import { cn } from '@heroui/react';
 
-import { Radar } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
+
+import { options } from '@/shared/config/chart';
 
 import type { GamesDuration } from '../model/types/Statistics';
 
@@ -43,11 +45,16 @@ export const GamesDurationChart = ({ statistics }: GamesDurationChartProps) => {
         <div
             className={cn(
                 'flex flex-col items-center justify-center',
-                'h-[350px] w-full rounded-xl bg-sky-200 p-3 text-black',
+                'h-[450px] w-full rounded-xl bg-sky-200 p-3 text-black',
             )}
         >
             {statistics ? (
-                <Radar data={data} options={{ plugins: { legend: { display: false } } }} />
+                <Bar
+                    data={data}
+                    options={{
+                        plugins: { zoom: options.plugins?.zoom, legend: { display: false } },
+                    }}
+                />
             ) : (
                 <p>Здесь будет статистика длительности Ваших игр</p>
             )}

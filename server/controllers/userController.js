@@ -1,14 +1,14 @@
 const User = require('../models/User');
-const { Gamelogs, Room } = require('../models');
-const { verifyToken } = require('../utils/jwt');
+const {Gamelogs, Room} = require('../models');
+const {verifyToken} = require('../utils/jwt');
 
 const getUserProfile = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const {userId} = req.params;
         const user = await User.findById(userId).select('-password');
 
         if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
+            return res.status(404).json({error: 'Пользователь не найден'});
         }
 
         res.json({
@@ -27,7 +27,7 @@ const getUserProfile = async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка получения профиля:', error);
-        res.status(500).json({ error: 'Ошибка при получении профиля' });
+        res.status(500).json({error: 'Ошибка при получении профиля'});
     }
 };
 
@@ -35,24 +35,36 @@ const getLeaderboard = async (req, res) => {
     try {
         const users = await User.find({})
             .select('-password')
-            .sort({ rating: -1 })
-            .limit(100)
+            .sort({rating: -1})
+            .limit(5)
             .lean();
 
         res.json(users);
     } catch (error) {
         console.error('Ошибка получения таблицы лидеров:', error);
-        res.status(500).json({ error: 'Ошибка при получении таблицы лидеров' });
+        res.status(500).json({error: 'Ошибка при получении таблицы лидеров'});
     }
 };
 
 const getGames = async (req, res) => {
     try {
-        const games = await Gamelogs.find({}).lean();
-        res.json(games);
+        const limit = 15;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const skip = (page - 1) * limit;
+
+        const [games, total] = await Promise.all([
+            Gamelogs.find({})
+                .limit(limit)
+                .skip(skip)
+                .lean(),
+            Gamelogs.countDocuments({})
+        ]);
+        const hasMore = (page * limit) < total;
+
+        return res.status(200).json({games, total, hasMore})
     } catch (error) {
         console.error('Ошибка получения игр:', error);
-        res.status(500).json({ error: 'Ошибка при получении игр' });
+        res.status(500).json({error: 'Ошибка при получении игр'});
     }
 };
 
@@ -62,24 +74,24 @@ const getRooms = async (req, res) => {
         res.json(rooms);
     } catch (error) {
         console.error('Ошибка получения комнат:', error);
-        res.status(500).json({ error: 'Ошибка при получении комнат' });
+        res.status(500).json({error: 'Ошибка при получении комнат'});
     }
 };
 
 const updateProfile = async (req, res) => {
     try {
-        const { username } = req.body;
+        const {username} = req.body;
         const user = await User.findById(req.user._id);
 
         if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
+            return res.status(404).json({error: 'Пользователь не найден'});
         }
 
         if (username && username !== user.username) {
             // Проверка уникальности имени
-            const existingUser = await User.findOne({ username });
+            const existingUser = await User.findOne({username});
             if (existingUser) {
-                return res.status(400).json({ error: 'Пользователь с таким именем уже существует' });
+                return res.status(400).json({error: 'Пользователь с таким именем уже существует'});
             }
             user.username = username;
         }
@@ -101,7 +113,7 @@ const updateProfile = async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка обновления профиля:', error);
-        res.status(500).json({ error: 'Ошибка при обновлении профиля' });
+        res.status(500).json({error: 'Ошибка при обновлении профиля'});
     }
 };
 
@@ -111,32 +123,32 @@ const getUserStatistics = async (req, res) => {
             req.headers.authorization?.split('Bearer ')[1] || req.query.token;
 
         if (!token) {
-            return res.status(401).json({ error: 'Токен не предоставлен' });
+            return res.status(401).json({error: 'Токен не предоставлен'});
         }
 
         const decoded = verifyToken(token);
 
         if (!decoded || !decoded.userId) {
-            return res.status(401).json({ error: 'Недействительный токен' });
+            return res.status(401).json({error: 'Недействительный токен'});
         }
 
         const user = await User.findById(decoded.userId).select('username');
 
         if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
+            return res.status(404).json({error: 'Пользователь не найден'});
         }
 
         const username = user.username;
 
-        const games = await Gamelogs.find({ players: username })
-            .sort({ createdAt: 1 })
+        const games = await Gamelogs.find({players: username})
+            .sort({createdAt: 1})
             .lean();
 
         if (!games.length) {
             return res.json({
                 username,
                 statistics: [],
-                summary: { totalGames: 0, totalWins: 0 },
+                summary: {totalGames: 0, totalWins: 0},
                 matchups: [],
                 durations: null,
                 scores: null,
@@ -359,47 +371,47 @@ const getUserStatistics = async (req, res) => {
         const durations =
             durationsCount > 0
                 ? {
-                      averageSeconds: Math.round(
-                          totalDurationMs / durationsCount / 1000,
-                      ),
-                      shortestSeconds:
-                          shortestDurationMs !== null
-                              ? Math.round(shortestDurationMs / 1000)
-                              : null,
-                      longestSeconds:
-                          longestDurationMs !== null
-                              ? Math.round(longestDurationMs / 1000)
-                              : null,
-                      averageWinSeconds:
-                          winDurationsCount > 0
-                              ? Math.round(
-                                    totalWinDurationMs /
-                                        winDurationsCount /
-                                        1000,
-                                )
-                              : null,
-                      averageLoseSeconds:
-                          loseDurationsCount > 0
-                              ? Math.round(
-                                    totalLoseDurationMs /
-                                        loseDurationsCount /
-                                        1000,
-                                )
-                              : null,
-                  }
+                    averageSeconds: Math.round(
+                        totalDurationMs / durationsCount / 1000,
+                    ),
+                    shortestSeconds:
+                        shortestDurationMs !== null
+                            ? Math.round(shortestDurationMs / 1000)
+                            : null,
+                    longestSeconds:
+                        longestDurationMs !== null
+                            ? Math.round(longestDurationMs / 1000)
+                            : null,
+                    averageWinSeconds:
+                        winDurationsCount > 0
+                            ? Math.round(
+                                totalWinDurationMs /
+                                winDurationsCount /
+                                1000,
+                            )
+                            : null,
+                    averageLoseSeconds:
+                        loseDurationsCount > 0
+                            ? Math.round(
+                                totalLoseDurationMs /
+                                loseDurationsCount /
+                                1000,
+                            )
+                            : null,
+                }
                 : null;
 
         const scoresStats =
             totalGames > 0
                 ? {
-                      averageCellsKilled:
-                          totalSelfScore / totalGames,
-                      averageCellsLost: totalOppScore / totalGames,
-                      maxCellsKilled: maxSelfScore,
-                      minCellsKilled: minSelfScore,
-                      averageCellDiff:
-                          totalScoreDiff / totalGames,
-                  }
+                    averageCellsKilled:
+                        totalSelfScore / totalGames,
+                    averageCellsLost: totalOppScore / totalGames,
+                    maxCellsKilled: maxSelfScore,
+                    minCellsKilled: minSelfScore,
+                    averageCellDiff:
+                        totalScoreDiff / totalGames,
+                }
                 : null;
 
         const streaks = {
@@ -420,7 +432,7 @@ const getUserStatistics = async (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка получения статистики пользователя:', error);
-        res.status(500).json({ error: 'Ошибка при получении статистики пользователя' });
+        res.status(500).json({error: 'Ошибка при получении статистики пользователя'});
     }
 };
 
