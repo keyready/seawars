@@ -15,7 +15,7 @@ import { Navigate, useBlocker, useParams } from 'react-router';
 
 import { Page } from '@/widgets/Page';
 
-import { DroppableShipBoard } from '@/entities/GameBoard';
+import { DroppableShipBoard, getGamePhase } from '@/entities/GameBoard';
 import { getUserData } from '@/entities/User';
 
 import { useGameActions } from '@/shared/hooks/useGameSocket';
@@ -24,10 +24,12 @@ export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
     const { getRoomInfo, handlePlayerLeaveRoom } = useGameActions();
 
+    const isGameOvered = useSelector(getGamePhase) === 'placing';
+
     const [isLeaveModalEnabled, setIsLeaveModalEnabled] = useState<boolean>(false);
 
     const name = useSelector(getUserData)?.username || '';
-    const blocker = useBlocker(true);
+    const blocker = useBlocker(!isGameOvered);
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
@@ -80,16 +82,13 @@ export default function RoomPage() {
                     <ModalHeader className="text-danger">Просто сбежите?</ModalHeader>
                     <ModalBody>
                         <h1 className="text-lg">Вы собираетесь покинуть поле боя!</h1>
-                        <h2 className="text-sm">Как потом смотреть в глаза однополчанам???</h2>
+                        <h2 className="text-danger">Вам будет засчитано поражение</h2>
                     </ModalBody>
                     <ModalFooter>
                         <div className="flex items-center gap-3">
                             <ButtonGroup>
                                 <Button onPress={handleLeaveRoom} color="danger">
                                     Сбежать!
-                                </Button>
-                                <Button onPress={handleLeaveRoom} color="danger">
-                                    Ретироваться!
                                 </Button>
                                 <Button onPress={blocker.reset} color="success">
                                     Драться, как лев

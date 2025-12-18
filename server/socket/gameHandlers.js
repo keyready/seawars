@@ -101,6 +101,8 @@ const setupGameHandlers = (io, socket) => {
             const {horLine} = helpParams;
             switch (helpType) {
                 case 'airforces': {
+                    // авиудар
+
                     const cellsToDestroy = new Array(10)
                         .fill(0)
                         .map((_, index) => ({
@@ -118,6 +120,45 @@ const setupGameHandlers = (io, socket) => {
 
                             await Room.deleteOne({id: roomId});
 
+                            io.in(roomId).emit('game-over', {winner});
+                            io.emit('leaderboard', {
+                                games: await Gamelogs.find({}).lean(),
+                            });
+                        }
+
+                        socket.to(roomId).emit('incoming-fire', {target: opponent, pos: cellsToDestroy[i], result})
+                        socket.emit('fire-response', {pos: cellsToDestroy[i], result, turn: room.turn});
+
+                        if (!gameEnded) {
+                            io.in(roomId).emit('turn-changed', {turn: room.turn});
+                        }
+
+                        io.emit('existing-rooms', await Room.find({}).select('id players').lean());
+                    }
+                    break;
+                }
+                case 'bomb': {
+                    const { center } = helpParams;
+                    const cellsToDestroy = [];
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            const r = center.r + dr;
+                            const c = center.c + dc;
+                            if (r >= 0 && r < 10 && c >= 0 && c < 10) {
+                                cellsToDestroy.push({ r, c });
+                            }
+                        }
+                    }
+                    for (let i = 0; i < cellsToDestroy.length; i++) {
+                        const {opponent, result, gameEnded, winner} = processFire(room, player, cellsToDestroy[i]);
+
+                        if (!gameEnded) {
+                            room.lastActivity = new Date();
+                            room.markModified('fleets');
+                            await room.save();
+                        } else {
+                            await createGameLog(room, winner);
+                            await Room.deleteOne({id: roomId});
                             io.in(roomId).emit('game-over', {winner});
                             io.emit('leaderboard', {
                                 games: await Gamelogs.find({}).lean(),

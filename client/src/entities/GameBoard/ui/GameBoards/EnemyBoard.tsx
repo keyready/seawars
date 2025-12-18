@@ -1,8 +1,9 @@
 import { cn } from '@heroui/react';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { ChatPanel } from '@/entities/GameBoard/ui/ChatPanel';
 import type { Cell } from '@/entities/Ship';
 
 import { useAppDispatch } from '@/shared/hooks/useAppDispatch';
@@ -18,6 +19,24 @@ import { GameboardActions } from '../../model/slice/GameBoardSlice';
 import { CellsOverlay } from '../CellsOverlay';
 import { CheatOverlay } from '../CheatOverlay';
 
+function getLineCells(row: number): Cell[] {
+    return Array.from({ length: 10 }, (_, c) => ({ r: row, c }));
+}
+
+function getBombArea(center: Cell): Cell[] {
+    const area: Cell[] = [];
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            const r = center.r + dr;
+            const c = center.c + dc;
+            if (r >= 0 && r < 10 && c >= 0 && c < 10) {
+                area.push({ r, c });
+            }
+        }
+    }
+    return area;
+}
+
 export const EnemyBoard = () => {
     const { missCells, hitCells } = useSelector(getEnemyGameboard);
 
@@ -26,14 +45,37 @@ export const EnemyBoard = () => {
     const helpTools = useSelector(getHelpTools);
 
     const dispatch = useAppDispatch();
-    const { fire, requestWeaknessSupport } = useGameActions();
+    const { fire, requestWeaknessSupport, requestBombDrop } = useGameActions();
 
     const [hoveredCell, setHoveredCell] = useState<Cell>();
+    const [overlayAreas, setOverlayAreas] = useState<
+        { cells: Cell[]; color: string; key: string }[]
+    >([]);
+
+    useEffect(() => {
+        if (helpTools?.enabled === 'airplane' && helpTools?.hoveredRow !== undefined) {
+            setOverlayAreas([
+                {
+                    cells: getLineCells(helpTools.hoveredRow),
+                    color: 'bg-red-600/40',
+                    key: 'airplane',
+                },
+            ]);
+        } else if (helpTools?.enabled === 'bomb' && hoveredCell) {
+            setOverlayAreas([
+                { cells: getBombArea(hoveredCell), color: 'bg-rose-600/40', key: 'bomb' },
+            ]);
+        } else if (hoveredCell) {
+            setOverlayAreas([{ cells: [hoveredCell], color: 'bg-blue-600/80', key: 'bomb' }]);
+        } else {
+            setOverlayAreas([{ cells: [], color: 'bg-blue-600/80', key: 'bomb' }]);
+        }
+    }, [helpTools?.enabled, helpTools?.hoveredRow, hoveredCell]);
 
     const handleEnemyBoardFire = useCallback(
         (ev: React.MouseEvent) => {
             if (!playerTurn) return;
-            if (helpTools?.enabled && helpTools?.hoveredRow) {
+            if (helpTools?.enabled === 'airplane' && helpTools?.hoveredRow !== undefined) {
                 requestWeaknessSupport(helpTools.hoveredRow);
                 dispatch(
                     GameboardActions.setHelpTools({
@@ -43,7 +85,15 @@ export const EnemyBoard = () => {
                 );
                 return;
             }
-
+            if (helpTools?.enabled === 'bomb') {
+                const bombCenter = {
+                    c: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerX - 20) / 40))),
+                    r: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerY - 20) / 40))),
+                };
+                requestBombDrop(bombCenter);
+                dispatch(GameboardActions.setHelpTools({ enabled: undefined }));
+                return;
+            }
             const hit = {
                 c: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerX - 20) / 40))),
                 r: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerY - 20) / 40))),
@@ -56,6 +106,7 @@ export const EnemyBoard = () => {
             helpTools?.enabled,
             helpTools?.hoveredRow,
             playerTurn,
+            requestBombDrop,
             requestWeaknessSupport,
         ],
     );
@@ -79,8 +130,8 @@ export const EnemyBoard = () => {
             }
 
             const hit = {
-                c: Math.floor(x / 40),
-                r: Math.floor(y / 40),
+                c: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerX - 20) / 40))),
+                r: Math.max(0, Math.min(9, Math.round((ev.nativeEvent.layerY - 20) / 40))),
             };
 
             if (hit.c < 0 || hit.c > 9 || hit.r < 0 || hit.r > 9) {
@@ -130,13 +181,13 @@ export const EnemyBoard = () => {
             }}
         >
             <CheatOverlay onFire={handleCheatFire} />
+            <ChatPanel />
             <CellsOverlay
                 prefix="enemy"
                 missCells={missCells}
                 hitCells={hitCells}
-                hoveredCell={hoveredCell}
                 isReady={isReady}
-                hoveredRow={helpTools?.hoveredRow}
+                overlayAreas={overlayAreas}
             />
         </div>
     );

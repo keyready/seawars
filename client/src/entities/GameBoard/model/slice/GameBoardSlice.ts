@@ -44,6 +44,8 @@ const initialState: GameBoardSchema = {
 
     room: undefined,
     existingRooms: undefined,
+    helpTools: undefined,
+    enemyFleet: [],
 };
 
 const GameStateSlice = createSlice({
@@ -113,6 +115,7 @@ const GameStateSlice = createSlice({
                 hitCells: [],
                 missCells: [],
             };
+            state.enemyFleet = [];
             state.phase = 'placing';
             state.currentPlayer = 'me';
             state.room = undefined;

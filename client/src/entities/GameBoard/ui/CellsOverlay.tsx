@@ -1,24 +1,25 @@
 import { cn } from '@heroui/react';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useSelector } from 'react-redux';
 
 import type { Cell } from '@/entities/Ship';
 
-import { getCurrentTurn } from '../model/selectors/getGameBoard';
+interface OverlayArea {
+    cells: Cell[];
+    color: string;
+    key: string;
+}
 
 interface CellsOverlayProps {
     missCells: Cell[];
     hitCells: Cell[];
-    hoveredCell?: Cell | undefined;
+    overlayAreas?: OverlayArea[];
     prefix: string;
     isReady: boolean;
-    hoveredRow?: number;
 }
 
 export const CellsOverlay = (props: CellsOverlayProps) => {
-    const { missCells, hitCells, hoveredCell, hoveredRow, isReady, prefix } = props;
-    const playerTurn = useSelector(getCurrentTurn) === 'me';
+    const { missCells, hitCells, overlayAreas = [], isReady, prefix } = props;
 
     return (
         <AnimatePresence mode="sync">
@@ -44,44 +45,25 @@ export const CellsOverlay = (props: CellsOverlayProps) => {
                     style={{ top: cell.r * 40, left: cell.c * 40 }}
                 />
             ))}
-            {playerTurn &&
-                hoveredCell &&
-                !hitCells.some((hc) => hc.c === hoveredCell.c && hc.r === hoveredCell.r) &&
-                !missCells.some((hc) => hc.c === hoveredCell.c && hc.r === hoveredCell.r) && (
+            {overlayAreas.map((area) =>
+                area.cells.map((cell) => (
                     <motion.div
-                        key={prefix + '-hover-' + hoveredCell.r + '-' + hoveredCell.c}
+                        key={prefix + '-' + area.key + '-' + cell.r + '-' + cell.c}
                         initial={{ opacity: 0, scale: 0.6, borderRadius: '50%' }}
                         exit={{ opacity: 0, scale: 0.6, borderRadius: '50%' }}
                         animate={{ opacity: 1, scale: 1, borderRadius: 0 }}
                         transition={{ duration: 0.1 }}
                         className={cn(
                             'pointer-events-none absolute z-50 h-10 w-10',
-                            isReady ? 'bg-blue-500/70' : 'bg-gray-500/70',
+                            area.color || (isReady ? 'bg-blue-500/70' : 'bg-gray-500/70'),
                         )}
                         style={{
-                            top: hoveredCell.r * 40,
-                            left: hoveredCell.c * 40,
+                            top: cell.r * 40,
+                            left: cell.c * 40,
                         }}
                     />
-                )}
-            {hoveredRow !== undefined &&
-                new Array(10).fill(0).map((_, index) => (
-                    <motion.div
-                        key={prefix + '-hover-row-' + hoveredRow + '-' + index}
-                        initial={{ opacity: 0, scale: 0.6, borderRadius: '50%' }}
-                        exit={{ opacity: 0, scale: 0.6, borderRadius: '50%' }}
-                        animate={{ opacity: 1, scale: 1, borderRadius: 0 }}
-                        transition={{ duration: 0.1 }}
-                        className={cn(
-                            'pointer-events-none absolute z-50 h-10 w-10',
-                            isReady ? 'bg-blue-500/70' : 'bg-gray-500/70',
-                        )}
-                        style={{
-                            top: hoveredRow * 40,
-                            left: index * 40,
-                        }}
-                    />
-                ))}
+                )),
+            )}
         </AnimatePresence>
     );
 };

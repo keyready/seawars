@@ -24,12 +24,13 @@ export interface GameBoard {
     fleet: Fleet;
 }
 
-export type HelpToolsTypes = 'rocket' | 'airplane' | 'mine';
+export type HelpToolsTypes = 'rocket' | 'airplane' | 'mine' | 'bomb';
 
 export interface HelpTools {
     enabled?: HelpToolsTypes;
     selectedRow?: number;
     hoveredRow?: number;
+    bombCenter?: Cell;
 }
 
 export interface GameBoardSchema {

@@ -119,7 +119,6 @@ export const OwnerBoard = ({ onPlacementEnd }: OwnerBoardProps) => {
     return (
         <div className="relative flex">
             <WeaknessSupport />
-
             <div className="flex flex-col items-center justify-center gap-10">
                 <DropZone id={DROPPABLE_ID} isOver={false}>
                     {fleet.map((ship) => {

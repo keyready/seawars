@@ -233,9 +233,9 @@ export const useGameActions = () => {
 
         const handleGameOver = ({ winner }: { winner: string }) => {
             const state = stateRef.current;
-            state.navigate('/');
-            addToast({ color: 'warning', title: `Победитель - ${winner}` });
             state.dispatch(GameboardActions.reset());
+            addToast({ color: 'warning', title: `Победитель - ${winner}` });
+            state.navigate('/');
         };
 
         const handleEndGame = () => {
@@ -357,12 +357,13 @@ export const useGameActions = () => {
 
     const handlePlayerLeaveRoom = useCallback(() => {
         console.log(`[SOCKET] Player left the room`);
+        dispatch(GameboardActions.reset());
         if (socket) {
             socket.emit('player-left-room', { roomId: currentRoom, player: currentName });
         } else {
             console.warn("Couldn't create socket connection");
         }
-    }, [currentName, currentRoom, socket]);
+    }, [currentName, currentRoom, dispatch, socket]);
 
     const handleFire = useCallback(
         (cell: Cell) => {
@@ -434,6 +435,23 @@ export const useGameActions = () => {
         [dispatch, socket],
     );
 
+    const handleBombDropRequest = useCallback(
+        (center: Cell) => {
+            const params = {
+                roomId: currentRoom,
+                player: currentName,
+                helpType: 'bomb',
+                helpParams: { center },
+            };
+            if (socket) {
+                socket.emit('weakness-support', params);
+            } else {
+                console.warn("Couldn't create socket connection");
+            }
+        },
+        [currentName, currentRoom, socket],
+    );
+
     return {
         startGame: handleSetGameReady,
         getHelp: handleCheatsEnablingRequest,
@@ -445,5 +463,6 @@ export const useGameActions = () => {
         enemyGameboard,
         handlePlayerLeaveRoom,
         requestWeaknessSupport: handleWeaknessSupportRequest,
+        requestBombDrop: handleBombDropRequest,
     };
 };
