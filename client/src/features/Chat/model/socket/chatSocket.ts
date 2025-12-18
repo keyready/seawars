@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { useSocket } from '@/store/SocketContext';
+import { useSocket } from '@/app/store/SocketContext';
+
 import { ChatActions } from '../slice/ChatSlice';
 import type { ChatMessage } from '../types/Chat';
 
@@ -10,9 +11,12 @@ export const useChatSocket = (roomId?: string, playerName?: string) => {
     const dispatch = useDispatch();
 
     // Установка комнаты для чата
-    const setRoom = useCallback((roomId: string) => {
-        dispatch(ChatActions.setRoom(roomId));
-    }, [dispatch]);
+    const setRoom = useCallback(
+        (roomId: string) => {
+            dispatch(ChatActions.setRoom(roomId));
+        },
+        [dispatch],
+    );
 
     // Отправка сообщения
     const sendMessage = useCallback(
@@ -22,7 +26,7 @@ export const useChatSocket = (roomId?: string, playerName?: string) => {
             socket.emit('send-message', {
                 roomId,
                 message,
-                player: playerName
+                player: playerName,
             });
         },
         [socket, roomId, playerName],
@@ -34,7 +38,7 @@ export const useChatSocket = (roomId?: string, playerName?: string) => {
 
         socket.emit('get-chat-history', {
             roomId,
-            player: playerName
+            player: playerName,
         });
     }, [socket, roomId, playerName]);
 
@@ -68,6 +72,6 @@ export const useChatSocket = (roomId?: string, playerName?: string) => {
         sendMessage,
         getChatHistory,
         setRoom,
-        clearChat
+        clearChat,
     };
 };

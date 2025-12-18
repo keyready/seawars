@@ -1,8 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import type { User } from '../types/User';
+import type { ThunkConfig } from '@/app/store';
 
-import type { ThunkConfig } from '@/store/StateSchema';
+import type { User } from '../types/User';
 
 export const getUsersLeaderboard = createAsyncThunk<User[], void, ThunkConfig<string>>(
     'User/getUsersLeaderboard',

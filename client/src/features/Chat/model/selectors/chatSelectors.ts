@@ -1,4 +1,4 @@
-import type { StateSchema } from '@/store/StateSchema';
+import type { StateSchema } from '@/app/store';
 
 export const getChatMessages = (state: StateSchema) => state.chat.messages;
 export const getCurrentRoomId = (state: StateSchema) => state.chat.currentRoomId;

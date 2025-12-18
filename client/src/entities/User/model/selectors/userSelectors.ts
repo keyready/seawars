@@ -1,4 +1,4 @@
-import type { StateSchema } from '@/store/StateSchema';
+import type { StateSchema } from '@/app/store';
 
 export const getUserData = (state: StateSchema) => state.user.user;
 export const getIsUserLoading = (state: StateSchema) => state.user.isLoading;

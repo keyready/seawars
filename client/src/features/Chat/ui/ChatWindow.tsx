@@ -24,14 +24,12 @@ export const ChatWindow = ({ roomId, playerName }: ChatWindowProps) => {
     const [newMessage, setNewMessage] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Получение истории чата при входе в комнату
     useEffect(() => {
         if (roomId && username) {
             getChatHistory();
         }
     }, [roomId, username, getChatHistory]);
 
-    // Авто-скролл к последнему сообщению
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -58,7 +56,12 @@ export const ChatWindow = ({ roomId, playerName }: ChatWindowProps) => {
             onClick={(ev) => ev.stopPropagation()}
             className="flex w-full flex-col gap-4 overflow-y-hidden"
         >
-            <ScrollShadow className="flex h-[350px] w-full flex-col justify-start gap-1 overflow-y-auto p-1">
+            <ScrollShadow
+                className={cn(
+                    'overflow-y-auto',
+                    'flex h-[350px] w-full flex-col justify-start gap-1 p-1',
+                )}
+            >
                 {messages?.length ? (
                     messages.map((msg, index) => (
                         <div
@@ -72,7 +75,7 @@ export const ChatWindow = ({ roomId, playerName }: ChatWindowProps) => {
                             key={`${msg.createdAt}-${index}`}
                         >
                             <p className="text-justify text-[12px]">{msg.text}</p>
-                            <p className="text-[8px]">
+                            <p className="self-end text-[8px] opacity-50">
                                 {new Date(msg.createdAt).toLocaleTimeString('ru-RU', {
                                     minute: '2-digit',
                                     hour: '2-digit',

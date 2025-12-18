@@ -1,4 +1,4 @@
-import type { StateSchema } from '@/store/StateSchema';
+import type { StateSchema } from '@/app/store';
 
 export const getGames = (state: StateSchema) => state.leaderboard.leaderboards || [];
 export const getTotalGames = (state: StateSchema) => state.leaderboard.totalGames || 1;

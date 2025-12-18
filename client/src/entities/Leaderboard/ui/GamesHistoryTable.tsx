@@ -26,7 +26,7 @@ const columns = [
     { key: 'winner', label: 'Победитель' },
     { key: 'date', label: 'Дата и время проведения' },
     { key: 'score', label: 'Счет игры' },
-    { key: 'ratingDelta', label: 'Изменение рейтинга' },
+    { key: 'ratingDelta', label: 'Δ рейтинга' },
 ];
 
 export const GamesHistoryTable = () => {
@@ -101,7 +101,7 @@ export const GamesHistoryTable = () => {
                         color="primary"
                         variant="light"
                         page={page}
-                        total={Math.round(totalGames / 15) || 1}
+                        total={Math.round(totalGames / 5) || 1}
                         onChange={(page) => setPage(page)}
                     />
                 </div>

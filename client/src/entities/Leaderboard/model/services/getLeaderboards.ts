@@ -1,8 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import type { FetchLeaderboardsParams } from '../types/Leaderboard';
+import type { ThunkConfig } from '@/app/store';
 
-import type { ThunkConfig } from '@/store/StateSchema';
+import type { FetchLeaderboardsParams } from '../types/Leaderboard';
 
 export const fetchLeaderboards = createAsyncThunk<
     FetchLeaderboardsParams,

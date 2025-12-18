@@ -46,10 +46,7 @@ export const ProfileBlock = () => {
     }, []);
 
     return (
-        <Card
-            className="h-[400px] w-full bg-red-200"
-            title={userData?.id ? 'Профиль' : 'Авторизация'}
-        >
+        <Card className="!h-fit w-full bg-red-200" title={userData?.id ? 'Профиль' : 'Авторизация'}>
             <AnimatePresence mode="wait">
                 {userData?.id ? (
                     <motion.div

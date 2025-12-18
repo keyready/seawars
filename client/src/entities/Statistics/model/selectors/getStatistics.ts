@@ -1,4 +1,4 @@
-import type { StateSchema } from '@/store/StateSchema';
+import type { StateSchema } from '@/app/store';
 
 export const getCommonStatistics = (state: StateSchema) => state.statistics.statistics?.common;
 export const getGamesProgressStatistics = (state: StateSchema) =>

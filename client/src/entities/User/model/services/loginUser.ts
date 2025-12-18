@@ -1,8 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import type { LoginSchema, SignupAnswer } from '../types/User';
+import type { ThunkConfig } from '@/app/store';
 
-import type { ThunkConfig } from '@/store/StateSchema';
+import type { LoginSchema, SignupAnswer } from '../types/User';
 
 export const loginUSer = createAsyncThunk<SignupAnswer, LoginSchema, ThunkConfig<string>>(
     'User/loginUSer',

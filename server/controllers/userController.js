@@ -48,7 +48,7 @@ const getLeaderboard = async (req, res) => {
 
 const getGames = async (req, res) => {
     try {
-        const limit = 15;
+        const limit = 5;
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const skip = (page - 1) * limit;
 

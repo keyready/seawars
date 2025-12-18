@@ -5,11 +5,11 @@ import { RouterProvider } from 'react-router/dom';
 import { StrictMode } from 'react';
 import { createBrowserRouter } from 'react-router';
 
+import { SocketProvider } from '@/app/store/SocketContext';
+import { StoreProvider } from '@/app/store/StoreProvider';
+
 import MainPage from '@/pages/MainPage';
 import RoomPage from '@/pages/RoomPage';
-
-import { SocketProvider } from '@/store/SocketContext';
-import { StoreProvider } from '@/store/StoreProvider';
 
 import './app/index.css';
 

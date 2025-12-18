@@ -4,11 +4,12 @@ import { GamesHistoryTable } from '@/entities/Leaderboard';
 import { RoomsTable } from '@/entities/Room';
 import { LeaderboardBlock, ProfileBlock } from '@/entities/User';
 
-import { useGameActions } from '@/shared/hooks/useGameSocket';
+import { useGameSocketHandlers, useGlobalSocketHandlers } from '@/shared/hooks/useGameSocket';
 import { Card } from '@/shared/ui/Card';
 
 export default function MainPage() {
-    useGameActions();
+    useGlobalSocketHandlers();
+    useGameSocketHandlers();
 
     return (
         <Page>
@@ -18,7 +19,7 @@ export default function MainPage() {
                 <Card className="h-[400px] w-full bg-red-200" title="Активные комнаты">
                     <RoomsTable />
                 </Card>
-                <Card className="h-[750px]" title="Недавние игры">
+                <Card className="!h-fit" title="Недавние игры">
                     <GamesHistoryTable />
                 </Card>
                 <ProfileBlock />

@@ -1,4 +1,4 @@
-import type { StateSchema } from '@/store/StateSchema';
+import type { StateSchema } from '@/app/store';
 
 export const getOwnerGameboard = (state: StateSchema) => state.board.ownerBoard.grid;
 export const getOwnerFleet = (state: StateSchema) => state.board.ownerBoard.fleet;

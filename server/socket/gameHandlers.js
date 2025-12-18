@@ -1,5 +1,5 @@
 const {Room, Gamelogs} = require('../models');
-const {processFire, createGameLog} = require('../services/gameService');
+const {processFire, createGameLog, applyBonusPenalty} = require('../services/gameService');
 
 const setupGameHandlers = (io, socket) => {
     socket.on('submit-fleet', async ({fleet, player, roomId}) => {
@@ -68,12 +68,15 @@ const setupGameHandlers = (io, socket) => {
                 await room.save();
             } else {
                 // Создаем лог игры и обновляем статистику
-                await createGameLog(room, winner);
+                const {gameLog, ratingChanges} = await createGameLog(room, winner);
 
                 // Удаляем комнату после победы
                 await Room.deleteOne({id: roomId});
 
-                io.in(roomId).emit('game-over', {winner});
+                io.in(roomId).emit('game-over', {
+                    winner,
+                    ratingChanges
+                });
                 io.emit('leaderboard', {
                     games: await Gamelogs.find({}).lean(),
                 });
@@ -101,7 +104,11 @@ const setupGameHandlers = (io, socket) => {
             const {horLine} = helpParams;
             switch (helpType) {
                 case 'airforces': {
-                    // авиудар
+                    const err = await applyBonusPenalty(player, 'airforces');
+                    if (err) {
+                        socket.emit('error', {message: err})
+                        break;
+                    }
 
                     const cellsToDestroy = new Array(10)
                         .fill(0)
@@ -116,11 +123,14 @@ const setupGameHandlers = (io, socket) => {
                             room.markModified('fleets');
                             await room.save();
                         } else {
-                            await createGameLog(room, winner);
+                            const {gameLog, ratingChanges} = await createGameLog(room, winner);
 
                             await Room.deleteOne({id: roomId});
 
-                            io.in(roomId).emit('game-over', {winner});
+                            io.in(roomId).emit('game-over', {
+                                winner,
+                                ratingChanges
+                            });
                             io.emit('leaderboard', {
                                 games: await Gamelogs.find({}).lean(),
                             });
@@ -135,9 +145,16 @@ const setupGameHandlers = (io, socket) => {
 
                         io.emit('existing-rooms', await Room.find({}).select('id players').lean());
                     }
+
                     break;
                 }
                 case 'bomb': {
+                    const err = await applyBonusPenalty(player, 'bomb');
+                    if (err) {
+                        socket.emit('error', {message: err})
+                        break;
+                    }
+
                     const { center } = helpParams;
                     const cellsToDestroy = [];
                     for (let dr = -1; dr <= 1; dr++) {
@@ -157,9 +174,12 @@ const setupGameHandlers = (io, socket) => {
                             room.markModified('fleets');
                             await room.save();
                         } else {
-                            await createGameLog(room, winner);
+                            const {gameLog, ratingChanges} = await createGameLog(room, winner);
                             await Room.deleteOne({id: roomId});
-                            io.in(roomId).emit('game-over', {winner});
+                            io.in(roomId).emit('game-over', {
+                                winner,
+                                ratingChanges
+                            });
                             io.emit('leaderboard', {
                                 games: await Gamelogs.find({}).lean(),
                             });
@@ -180,7 +200,7 @@ const setupGameHandlers = (io, socket) => {
 
         } catch (err) {
             console.error('Error submitting fleet:', err);
-            socket.emit('error', {message: 'Failed to submit fleet'});
+            socket.emit('error', {message: err || 'Failed to submit fleet'});
         }
     })
 

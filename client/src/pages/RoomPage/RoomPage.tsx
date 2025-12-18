@@ -11,18 +11,22 @@ import {
 
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, useBlocker, useParams } from 'react-router';
+import { Navigate, useBlocker, useNavigate, useParams } from 'react-router';
 
 import { Page } from '@/widgets/Page';
 
 import { DroppableShipBoard, getGamePhase } from '@/entities/GameBoard';
 import { getUserData } from '@/entities/User';
 
-import { useGameActions } from '@/shared/hooks/useGameSocket';
+import { useGameActions, useGameSocketHandlers } from '@/shared/hooks/useGameSocket';
 
 export default function RoomPage() {
     const { roomId } = useParams<{ roomId: string }>();
     const { getRoomInfo, handlePlayerLeaveRoom } = useGameActions();
+
+    useGameSocketHandlers();
+
+    const navigate = useNavigate();
 
     const isGameOvered = useSelector(getGamePhase) === 'placing';
 
@@ -30,6 +34,10 @@ export default function RoomPage() {
 
     const name = useSelector(getUserData)?.username || '';
     const blocker = useBlocker(!isGameOvered);
+
+    useEffect(() => {
+        if (!isGameOvered) navigate('/');
+    }, [isGameOvered, navigate]);
 
     useEffect(() => {
         if (blocker.state === 'blocked') {

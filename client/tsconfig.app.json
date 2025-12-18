@@ -12,7 +12,6 @@
       "@/components/*": ["./src/components/*"],
       "@/entities/*": ["./src/entities/*"],
       "@/shared/*": ["./src/shared/*"],
-      "@/store/*": ["./src/store/*"],
       "@/pages/*": ["./src/pages/*"],
       "@/features/*": ["./src/features/*"],
       "@/app/*": ["./src/app/*"],

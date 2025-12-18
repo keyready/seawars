@@ -1,8 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import type { ServerStatisticsResponse, Statistics } from '../types/Statistics';
+import type { ThunkConfig } from '@/app/store';
 
-import type { ThunkConfig } from '@/store/StateSchema';
+import type { ServerStatisticsResponse, Statistics } from '../types/Statistics';
 
 export const getStatistics = createAsyncThunk<Statistics, void, ThunkConfig<string>>(
     'Statistics/getStatistics',

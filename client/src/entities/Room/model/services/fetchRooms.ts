@@ -1,8 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import type { Room } from '../types/Room';
+import type { ThunkConfig } from '@/app/store';
 
-import type { ThunkConfig } from '@/store/StateSchema';
+import type { Room } from '../types/Room';
 
 export const fetchRooms = createAsyncThunk<Room[], void, ThunkConfig<string>>(
     'Room/fetchRooms',
