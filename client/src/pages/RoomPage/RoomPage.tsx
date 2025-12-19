@@ -11,7 +11,7 @@ import {
 
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, useBlocker, useNavigate, useParams } from 'react-router';
+import { Navigate, useBlocker, useParams } from 'react-router';
 
 import { Page } from '@/widgets/Page';
 
@@ -26,18 +26,12 @@ export default function RoomPage() {
 
     useGameSocketHandlers();
 
-    const navigate = useNavigate();
-
     const isGameOvered = useSelector(getGamePhase) === 'placing';
 
     const [isLeaveModalEnabled, setIsLeaveModalEnabled] = useState<boolean>(false);
 
     const name = useSelector(getUserData)?.username || '';
     const blocker = useBlocker(!isGameOvered);
-
-    useEffect(() => {
-        if (!isGameOvered) navigate('/');
-    }, [isGameOvered, navigate]);
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
